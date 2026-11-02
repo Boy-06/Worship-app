@@ -1,3 +1,4 @@
+import { supabase } from './supabase' // 如果 supabase.js 跟 App.jsx 在同一層就用 './supabase'
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Music, User, Calendar, CheckCircle2, XCircle, Sparkles, 
