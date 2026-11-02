@@ -1,4 +1,4 @@
-import { supabase } from './supabase' // 如果 supabase.js 跟 App.jsx 在同一層就用 './supabase'
+import { supabase } from './supabase';
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Music, User, Calendar, CheckCircle2, XCircle, Sparkles, 
@@ -123,170 +123,129 @@ const SUNDAYS = [
   { id: '2026-11-22', label: '11/22 主日' },
 ];
 
-// --- Initial Team Members Data ---
-const INITIAL_MEMBERS = [
-  {
-    id: 'm1',
-    name: 'David (大衛)',
-    avatarSeed: 'Felix',
-    bgStyle: 'b6e3f4',
-    roles: ['worship_lead', 'acoustic_guitar'],
-    availability: { '2026-11-01': true, '2026-11-08': true, '2026-11-15': true, '2026-11-22': false },
-    submitted: true,
-  },
-  {
-    id: 'm2',
-    name: 'Sarah (莎拉)',
-    avatarSeed: 'Aneka',
-    bgStyle: 'ffd5dc',
-    roles: ['worship_lead', 'vocal'],
-    availability: { '2026-11-01': true, '2026-11-08': false, '2026-11-15': true, '2026-11-22': true },
-    submitted: true,
-  },
-  {
-    id: 'm3',
-    name: 'Peter (彼得)',
-    avatarSeed: 'Jack',
-    bgStyle: 'd1d4f9',
-    roles: ['drum', 'bass'],
-    availability: { '2026-11-01': true, '2026-11-08': true, '2026-11-15': true, '2026-11-22': true },
-    submitted: true,
-  },
-  {
-    id: 'm4',
-    name: 'Hannah (哈拿)',
-    avatarSeed: 'Maria',
-    bgStyle: 'c0aede',
-    roles: ['keys', 'vocal'],
-    availability: { '2026-11-01': true, '2026-11-08': true, '2026-11-15': false, '2026-11-22': true },
-    submitted: true,
-  },
-  {
-    id: 'm5',
-    name: 'Paul (保羅)',
-    avatarSeed: 'Zoe',
-    bgStyle: 'ffdfbf',
-    roles: ['acoustic_guitar', 'bass'],
-    availability: { '2026-11-01': false, '2026-11-08': true, '2026-11-15': true, '2026-11-22': true },
-    submitted: true,
-  },
-  {
-    id: 'm6',
-    name: 'John (約翰)',
-    avatarSeed: 'Alexander',
-    bgStyle: 'c1f2c7',
-    roles: ['keys', 'worship_lead'],
-    availability: { '2026-11-01': true, '2026-11-08': true, '2026-11-15': true, '2026-11-22': false },
-    submitted: true,
-  },
-  {
-    id: 'm7',
-    name: 'Esther (以斯帖)',
-    avatarSeed: 'Sophia',
-    bgStyle: 'fde2e4',
-    roles: ['vocal'],
-    availability: { '2026-11-01': true, '2026-11-08': true, '2026-11-15': true, '2026-11-22': true },
-    submitted: true,
-  },
-  {
-    id: 'm8',
-    name: 'Joshua (約書亞)',
-    avatarSeed: 'Leo',
-    bgStyle: 'e2ece9',
-    roles: ['bass', 'drum'],
-    availability: { '2026-11-01': true, '2026-11-08': false, '2026-11-15': true, '2026-11-22': true },
-    submitted: false,
-  },
-];
-
 const AVATAR_SEEDS = ['Felix', 'Aneka', 'Jack', 'Maria', 'Zoe', 'Alexander', 'Sophia', 'Leo', 'Oliver', 'Maya'];
-const BG_COLORS = ['b6e3f4', 'ffd5dc', 'd1d4f9', 'c0aede', 'ffdfbf', 'c1f2c7'];
 
 export default function App() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [viewMode, setViewMode] = useState('wizard'); // 'wizard' | 'admin'
   const [step, setStep] = useState(1); // Steps 1 -> 5
   
-  const [members, setMembers] = useState(INITIAL_MEMBERS);
-  const [selectedMemberId, setSelectedMemberId] = useState('m1');
-  
-  // Editable state during survey
-  const [tempMember, setTempMember] = useState({ ...INITIAL_MEMBERS[0] });
-  
+  const [memberName, setMemberName] = useState('');
+  const [selectedRole, setSelectedRole] = useState('worship_lead');
+  const [avatarSeed, setAvatarSeed] = useState('Felix');
+  const [availabilityMap, setAvailabilityMap] = useState({
+    '2026-11-01': true,
+    '2026-11-08': true,
+    '2026-11-15': true,
+    '2026-11-22': true,
+  });
+
   const [confettiTrigger, setConfettiTrigger] = useState(0);
   const [scheduleResult, setScheduleResult] = useState(null);
   const [copiedNotification, setCopiedNotification] = useState(false);
+  const [adminSubmissions, setAdminSubmissions] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Sync temp member whenever user changes choice in Step 1
-  const handleSelectMember = (id) => {
-    playSound('click', soundEnabled);
-    setSelectedMemberId(id);
-    const m = members.find((item) => item.id === id) || members[0];
-    setTempMember(JSON.parse(JSON.stringify(m)));
-  };
+  // 提交問卷到 Supabase
+  const handleSubmitSurvey = async () => {
+    if (!memberName.trim()) {
+      alert('請輸入你的名字！');
+      return;
+    }
 
-  // Step 2 Role Toggle
-  const toggleTempRole = (roleId) => {
-    playSound('click', soundEnabled);
-    setTempMember((prev) => {
-      const has = prev.roles.includes(roleId);
-      if (has && prev.roles.length === 1) return prev; // keep at least 1
-      const newRoles = has ? prev.roles.filter((r) => r !== roleId) : [...prev.roles, roleId];
-      return { ...prev, roles: newRoles };
-    });
-  };
-
-  // Step 3 Availability Toggle
-  const toggleTempAvailability = (sundayId) => {
-    playSound('toggle', soundEnabled);
-    setTempMember((prev) => {
-      const current = !!prev.availability[sundayId];
-      return {
-        ...prev,
-        availability: {
-          ...prev.availability,
-          [sundayId]: !current,
-        },
-      };
-    });
-  };
-
-  // Submit survey
-  const handleSubmitSurvey = () => {
     playSound('success', soundEnabled);
     setConfettiTrigger((prev) => prev + 1);
-    
-    setMembers((prev) =>
-      prev.map((m) => (m.id === tempMember.id ? { ...tempMember, submitted: true } : m))
-    );
-    setStep(5); // Move to Success Step
+    setLoading(true);
+
+    try {
+      // 1. 寫入隊員資料到 users 表
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .insert([
+          { 
+            name: memberName, 
+            role: selectedRole, 
+            avatar_seed: avatarSeed 
+          }
+        ])
+        .select();
+
+      if (userError) throw userError;
+      const userId = userData[0].id;
+
+      // 2. 寫入該隊員填報的時間到 availability 表
+      const availabilityRecords = Object.entries(availabilityMap).map(([date, isAvailable]) => ({
+        user_id: userId,
+        date: date,
+        status: isAvailable ? 'available' : 'unavailable'
+      }));
+
+      const { error: avlError } = await supabase
+        .from('availability')
+        .insert(availabilityRecords);
+
+      if (avlError) throw avlError;
+
+      setStep(5); // 進入成功頁面
+    } catch (error) {
+      console.error('提交失敗:', error.message);
+      alert('提交時發生錯誤：' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // --- Auto Scheduling Algorithm ---
-  const autoSchedule = () => {
-    playSound('success', soundEnabled);
-    setConfettiTrigger((prev) => prev + 1);
+  // 管理員讀取所有提交數據
+  const fetchAdminData = async () => {
+    setLoading(true);
+    try {
+      const { data: users, error: userErr } = await supabase.from('users').select('*');
+      if (userErr) throw userErr;
+
+      const { data: avls, error: avlErr } = await supabase.from('availability').select('*');
+      if (avlErr) throw avlErr;
+
+      const combined = users.map(user => ({
+        ...user,
+        availability: avls.filter(a => a.user_id === user.id)
+      }));
+
+      setAdminSubmissions(combined);
+      runAutoSchedule(combined);
+    } catch (err) {
+      console.error('讀取後台數據失敗', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 自動排班演算法
+  const runAutoSchedule = (submissions) => {
+    if (!submissions || submissions.length === 0) return;
 
     const assignments = {};
     const memberServiceCount = {};
-    members.forEach((m) => (memberServiceCount[m.id] = 0));
+    submissions.forEach((m) => (memberServiceCount[m.id] = 0));
 
     SUNDAYS.forEach((s) => {
-      const avail = members.filter((m) => m.availability[s.id]);
       const sundayRoster = {};
       const assignedThisSunday = new Set();
 
       ROLES.forEach((role) => {
-        const candidates = avail.filter(
-          (m) => !assignedThisSunday.has(m.id) && m.roles.includes(role.id)
-        );
+        const candidates = submissions.filter((m) => {
+          if (assignedThisSunday.has(m.id)) return false;
+          const avl = m.availability.find(a => a.date === s.id);
+          const isAvailable = avl ? avl.status === 'available' : false;
+          const matchRole = m.role === role.name || Math.random() > 0.3; // 支援跨崗位
+          return isAvailable && matchRole;
+        });
 
         if (candidates.length > 0) {
-          candidates.sort((a, b) => memberServiceCount[a.id] - memberServiceCount[b.id]);
+          candidates.sort((a, b) => (memberServiceCount[a.id] || 0) - (memberServiceCount[b.id] || 0));
           const chosen = candidates[0];
           sundayRoster[role.id] = chosen;
           assignedThisSunday.add(chosen.id);
-          memberServiceCount[chosen.id] += 1;
+          memberServiceCount[chosen.id] = (memberServiceCount[chosen.id] || 0) + 1;
         } else {
           sundayRoster[role.id] = null;
         }
@@ -295,23 +254,15 @@ export default function App() {
       assignments[s.id] = sundayRoster;
     });
 
-    setScheduleResult({
-      assignments,
-      memberServiceCount,
-      generatedAt: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
-    });
+    setScheduleResult({ assignments, memberServiceCount });
   };
 
-  useEffect(() => {
-    autoSchedule();
-  }, []);
-
-  // Copy Broadcast String
+  // 複製廣播文字
   const copyBroadcastText = () => {
     playSound('click', soundEnabled);
     if (!scheduleResult) return;
 
-    let text = `✨ 【本月敬拜隊服侍陣容名單】 ✨\n各位隊友辛苦了！以下是自動配對陣容：\n\n`;
+    let text = `✨ 【本月敬拜隊服侍陣容名單】 ✨\n各位隊友辛苦了！以下是雲端自動配對陣容：\n\n`;
 
     SUNDAYS.forEach((s) => {
       text += `📅 ${s.label}\n`;
@@ -360,14 +311,16 @@ export default function App() {
 
           <span className="text-xs font-black text-slate-500 bg-white px-3 py-1.5 rounded-2xl border-2 border-slate-200 shadow-sm flex items-center">
             <Smartphone className="w-3.5 h-3.5 mr-1 text-[#58CC02]" />
-            手機問卷模式
+            雲端問卷模式
           </span>
         </div>
 
         <button
           onClick={() => {
-            setViewMode(viewMode === 'wizard' ? 'admin' : 'wizard');
+            const nextMode = viewMode === 'wizard' ? 'admin' : 'wizard';
+            setViewMode(nextMode);
             playSound('click', soundEnabled);
+            if (nextMode === 'admin') fetchAdminData();
           }}
           className={`px-3 py-1.5 rounded-2xl font-black text-xs border-b-4 transition-all flex items-center space-x-1 shadow-sm ${
             viewMode === 'wizard'
@@ -389,7 +342,7 @@ export default function App() {
         </button>
       </div>
 
-      {/* Mobile Device Frame Container (Max Width 420px) */}
+      {/* Mobile Device Frame Container */}
       <div className="w-full max-w-[420px] bg-white rounded-[36px] border-4 border-slate-800 shadow-2xl overflow-hidden flex flex-col relative min-h-[680px]">
         
         {/* Mobile Top Status Notch Bar */}
@@ -442,94 +395,67 @@ export default function App() {
             {/* Step Content Card Container */}
             <div className="my-auto py-2">
               
-              {/* STEP 1: SELECT MEMBER */}
+              {/* STEP 1: NAME & AVATAR */}
               {step === 1 && (
                 <div className="space-y-4 animate-fadeIn">
                   <div className="text-center space-y-1">
-                    <h2 className="text-xl font-black text-slate-800">你是哪一位隊員？</h2>
-                    <p className="text-xs font-extrabold text-slate-400">請挑選你的名字以載入個人設定</p>
+                    <h2 className="text-xl font-black text-slate-800">你叫咩名？</h2>
+                    <p className="text-xs font-extrabold text-slate-400">請輸入你的真實姓名或暱稱</p>
                   </div>
 
-                  {/* Avatar & Name Grid Options */}
-                  <div className="grid grid-cols-2 gap-2.5 max-h-[360px] overflow-y-auto p-1">
-                    {members.map((m) => {
-                      const isSelected = tempMember.id === m.id;
-                      return (
-                        <button
-                          key={m.id}
-                          onClick={() => handleSelectMember(m.id)}
-                          className={`p-3 rounded-2xl border-b-4 font-black flex items-center space-x-2.5 transition-all text-left ${
-                            isSelected
-                              ? 'bg-emerald-50 border-[#58CC02] text-slate-900 ring-2 ring-[#58CC02]'
-                              : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300'
-                          }`}
-                        >
-                          <div
-                            className="w-10 h-10 rounded-xl border-2 border-slate-800 flex items-center justify-center overflow-hidden flex-shrink-0"
-                            style={{ backgroundColor: `#${m.bgStyle}` }}
-                          >
-                            <img
-                              src={`https://api.dicebear.com/7.x/bottts/svg?seed=${m.avatarSeed}`}
-                              alt="avatar"
-                              className="w-8 h-8"
-                            />
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="text-xs font-black truncate">{m.name}</div>
-                            <div className="text-[10px] text-slate-400 font-bold">
-                              {m.submitted ? '已填寫 ✅' : '未填寫 ⏳'}
-                            </div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Avatar Customization Strip */}
-                  <div className="bg-white p-3 rounded-2xl border-2 border-slate-200 flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-slate-500">自訂頭像：</span>
-                    <div className="flex space-x-1.5">
-                      {AVATAR_SEEDS.slice(0, 5).map((s) => (
-                        <button
-                          key={s}
-                          onClick={() => {
-                            playSound('click', soundEnabled);
-                            setTempMember((prev) => ({ ...prev, avatarSeed: s }));
-                          }}
-                          className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center ${
-                            tempMember.avatarSeed === s ? 'border-[#58CC02] bg-emerald-50 scale-110' : 'border-slate-200'
-                          }`}
-                        >
-                          <img
-                            src={`https://api.dicebear.com/7.x/bottts/svg?seed=${s}`}
-                            alt={s}
-                            className="w-5 h-5"
-                          />
-                        </button>
-                      ))}
+                  <div className="flex flex-col items-center py-2">
+                    <div className="w-24 h-24 rounded-2xl border-4 border-slate-800 bg-emerald-50 flex items-center justify-center overflow-hidden shadow-inner mb-3">
+                      <img
+                        src={`https://api.dicebear.com/7.x/bottts/svg?seed=${avatarSeed}`}
+                        alt="Avatar"
+                        className="w-20 h-20"
+                      />
                     </div>
+                    <button
+                      onClick={() => {
+                        playSound('click', soundEnabled);
+                        const rand = AVATAR_SEEDS[Math.floor(Math.random() * AVATAR_SEEDS.length)];
+                        setAvatarSeed(rand);
+                      }}
+                      className="flex items-center gap-1 text-xs font-black text-[#1CB0F6] bg-sky-50 px-3 py-1.5 rounded-full border border-sky-200 hover:bg-sky-100 transition"
+                    >
+                      <RefreshCw size={14} /> 隨機切換造型
+                    </button>
+                  </div>
+
+                  <div>
+                    <input
+                      type="text"
+                      value={memberName}
+                      onChange={(e) => setMemberName(e.target.value)}
+                      placeholder="例如：Walter / 頌恩"
+                      className="w-full bg-white border-2 border-slate-200 rounded-2xl px-4 py-3.5 text-slate-800 font-bold focus:outline-none focus:border-[#58CC02] shadow-sm transition"
+                    />
                   </div>
                 </div>
               )}
 
-              {/* STEP 2: SELECT ROLES */}
+              {/* STEP 2: SELECT ROLE */}
               {step === 2 && (
                 <div className="space-y-4 animate-fadeIn">
                   <div className="text-center space-y-1">
-                    <h2 className="text-xl font-black text-slate-800">這個月你可以事奉哪些崗位？</h2>
-                    <p className="text-xs font-extrabold text-slate-400">(可多選，至少選擇一個崗位)</p>
+                    <h2 className="text-xl font-black text-slate-800">你的主要服侍崗位？</h2>
+                    <p className="text-xs font-extrabold text-slate-400">請選擇你最常負責的崗位</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 max-h-[380px] overflow-y-auto p-1">
                     {ROLES.map((role) => {
-                      const isSelected = tempMember.roles.includes(role.id);
+                      const isSelected = selectedRole === role.name;
                       return (
                         <button
                           key={role.id}
-                          onClick={() => toggleTempRole(role.id)}
-                          className={`p-4 rounded-2xl font-black text-sm flex flex-col items-center justify-center space-y-2 transition-all border-b-4 ${
+                          onClick={() => {
+                            playSound('click', soundEnabled);
+                            setSelectedRole(role.name);
+                          }}
+                          className={`p-3.5 rounded-2xl font-black text-sm flex flex-col items-center justify-center space-y-2 transition-all border-b-4 ${
                             isSelected
-                              ? `${role.color} border-slate-900 shadow-sm scale-100`
+                              ? `${role.color} border-slate-900 shadow-sm scale-105`
                               : 'bg-white border-slate-200 text-slate-400 hover:border-slate-300'
                           }`}
                         >
@@ -543,21 +469,27 @@ export default function App() {
                 </div>
               )}
 
-              {/* STEP 3: SELECT SUNDAY AVAILABILITY */}
+              {/* STEP 3: SELECT AVAILABILITY */}
               {step === 3 && (
                 <div className="space-y-4 animate-fadeIn">
                   <div className="text-center space-y-1">
-                    <h2 className="text-xl font-black text-slate-800">哪些主日你可以出席服侍？</h2>
+                    <h2 className="text-xl font-black text-slate-800">哪些主日你可以出席？</h2>
                     <p className="text-xs font-extrabold text-slate-400">點擊切換「得閒 🎉」或「忙碌 😴」</p>
                   </div>
 
                   <div className="space-y-2.5 max-h-[380px] overflow-y-auto p-1">
                     {SUNDAYS.map((sunday) => {
-                      const isAvailable = !!tempMember.availability[sunday.id];
+                      const isAvailable = !!availabilityMap[sunday.id];
                       return (
                         <div
                           key={sunday.id}
-                          onClick={() => toggleTempAvailability(sunday.id)}
+                          onClick={() => {
+                            playSound('toggle', soundEnabled);
+                            setAvailabilityMap(prev => ({
+                              ...prev,
+                              [sunday.id]: !isAvailable
+                            }));
+                          }}
                           className={`p-3.5 rounded-2xl border-b-4 transition-all cursor-pointer flex items-center justify-between ${
                             isAvailable
                               ? 'bg-[#E5F8D0] border-[#58CC02] text-slate-900 shadow-sm'
@@ -568,23 +500,15 @@ export default function App() {
                             <span className="text-2xl">{isAvailable ? '🎉' : '😴'}</span>
                             <div>
                               <div className="font-black text-sm">{sunday.label}</div>
-                              <div
-                                className={`text-[10px] font-black ${
-                                  isAvailable ? 'text-[#46A302]' : 'text-rose-500'
-                                }`}
-                              >
+                              <div className={`text-[10px] font-black ${isAvailable ? 'text-[#46A302]' : 'text-rose-500'}`}>
                                 {isAvailable ? '得閒 (可用)' : '忙碌 / 休假'}
                               </div>
                             </div>
                           </div>
 
-                          <div
-                            className={`px-3 py-1 rounded-xl text-xs font-black border-b-2 ${
-                              isAvailable
-                                ? 'bg-[#58CC02] text-white border-[#46A302]'
-                                : 'bg-rose-400 text-white border-rose-600'
-                            }`}
-                          >
+                          <div className={`px-3 py-1 rounded-xl text-xs font-black border-b-2 ${
+                            isAvailable ? 'bg-[#58CC02] text-white border-[#46A302]' : 'bg-rose-400 text-white border-rose-600'
+                          }`}>
                             {isAvailable ? '出席' : '缺席'}
                           </div>
                         </div>
@@ -599,59 +523,29 @@ export default function App() {
                 <div className="space-y-4 animate-fadeIn">
                   <div className="text-center space-y-1">
                     <h2 className="text-xl font-black text-slate-800">確認你的資料！</h2>
-                    <p className="text-xs font-extrabold text-slate-400">核對無誤後即可提交排班系統</p>
+                    <p className="text-xs font-extrabold text-slate-400">核對無誤後即可送出至雲端資料庫</p>
                   </div>
 
-                  <div className="bg-white rounded-2xl p-4 border-2 border-slate-200 shadow-sm space-y-4">
-                    {/* User Summary Header */}
+                  <div className="bg-white rounded-2xl p-4 border-2 border-slate-200 shadow-sm space-y-3">
                     <div className="flex items-center space-x-3 border-b-2 border-slate-100 pb-3">
-                      <div
-                        className="w-12 h-12 rounded-2xl border-2 border-slate-800 flex items-center justify-center"
-                        style={{ backgroundColor: `#${tempMember.bgStyle}` }}
-                      >
-                        <img
-                          src={`https://api.dicebear.com/7.x/bottts/svg?seed=${tempMember.avatarSeed}`}
-                          alt="avatar"
-                          className="w-10 h-10"
-                        />
+                      <div className="w-12 h-12 rounded-2xl border-2 border-slate-800 bg-emerald-50 flex items-center justify-center">
+                        <img src={`https://api.dicebear.com/7.x/bottts/svg?seed=${avatarSeed}`} alt="avatar" className="w-10 h-10" />
                       </div>
                       <div>
-                        <div className="font-black text-base text-slate-800">{tempMember.name}</div>
-                        <div className="text-xs text-[#58CC02] font-black">敬拜隊核心成員</div>
+                        <div className="font-black text-base text-slate-800">{memberName || '未填寫名字'}</div>
+                        <div className="text-xs text-[#58CC02] font-black">崗位：{selectedRole}</div>
                       </div>
                     </div>
 
-                    {/* Roles Summary */}
                     <div>
-                      <div className="text-xs font-black text-slate-400 mb-1.5">可服侍崗位：</div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {tempMember.roles.map((rId) => {
-                          const rObj = ROLES.find((r) => r.id === rId);
-                          return (
-                            <span
-                              key={rId}
-                              className="px-2.5 py-1 rounded-xl bg-slate-100 text-slate-700 font-black text-xs border border-slate-200"
-                            >
-                              {rObj?.icon} {rObj?.shortName}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Availability Summary */}
-                    <div>
-                      <div className="text-xs font-black text-slate-400 mb-1.5">主日出席狀況：</div>
+                      <div className="text-xs font-black text-slate-400 mb-1">主日出席狀況：</div>
                       <div className="grid grid-cols-2 gap-1.5">
                         {SUNDAYS.map((s) => {
-                          const isOk = tempMember.availability[s.id];
+                          const isOk = availabilityMap[s.id];
                           return (
-                            <div
-                              key={s.id}
-                              className={`p-2 rounded-xl text-xs font-black flex items-center justify-between border ${
-                                isOk ? 'bg-emerald-50 text-[#46A302] border-[#58CC02]' : 'bg-slate-50 text-slate-400 border-slate-200'
-                              }`}
-                            >
+                            <div key={s.id} className={`p-2 rounded-xl text-xs font-black flex items-center justify-between border ${
+                              isOk ? 'bg-emerald-50 text-[#46A302] border-[#58CC02]' : 'bg-slate-50 text-slate-400 border-slate-200'
+                            }`}>
                               <span>{s.label}</span>
                               <span>{isOk ? '✅ OK' : '❌ 不行'}</span>
                             </div>
@@ -672,42 +566,33 @@ export default function App() {
 
                   <div className="space-y-1">
                     <h2 className="text-2xl font-black text-slate-800">提交成功！</h2>
-                    <p className="text-xs font-bold text-slate-400">
-                      感謝你的參與，隊長將在統籌後發布最終排班表。
-                    </p>
-                  </div>
-
-                  <div className="bg-emerald-50 border-2 border-[#58CC02] p-4 rounded-2xl text-left space-y-2">
-                    <div className="font-black text-xs text-[#46A302] flex items-center">
-                      <CheckCircle2 className="w-4 h-4 mr-1" />
-                      資料已存入系統
-                    </div>
-                    <p className="text-[11px] text-slate-600 font-bold leading-relaxed">
-                      你可以隨時返回修改填報，或者切換至「隊長後台」檢視整體排班進度。
-                    </p>
+                    <p className="text-xs font-bold text-slate-400">資料已順利同步至 Supabase 雲端資料庫 🙏</p>
                   </div>
 
                   <div className="pt-2 space-y-2">
                     <button
-                      onClick={() => setViewMode('admin')}
+                      onClick={() => {
+                        setViewMode('admin');
+                        fetchAdminData();
+                      }}
                       className="w-full py-3.5 bg-[#1CB0F6] hover:bg-[#189cdb] text-white border-b-4 border-[#1482b8] rounded-2xl font-black text-sm flex items-center justify-center space-x-2 active:translate-y-1 transition-all shadow-md"
                     >
                       <Shield className="w-4 h-4" />
-                      <span>查看全隊排班進度 (隊長)</span>
+                      <span>查看管理員排班後台</span>
                     </button>
 
                     <button
                       onClick={() => setStep(1)}
                       className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 border-b-4 border-slate-300 rounded-2xl font-black text-xs active:translate-y-0.5 transition-all"
                     >
-                      修改我的填報項目
+                      重新填寫 / 修改資料
                     </button>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Bottom Button Action Area (Duolingo Style 3D Button) */}
+            {/* Bottom Button Action Area */}
             {step <= 4 && (
               <div className="pt-3 border-t-2 border-slate-100">
                 {step < 4 ? (
@@ -721,10 +606,11 @@ export default function App() {
                 ) : (
                   <button
                     onClick={handleSubmitSurvey}
+                    disabled={loading}
                     className="w-full py-3.5 bg-[#FFC800] hover:bg-[#ffb700] text-slate-900 border-b-4 border-[#e5a900] active:border-b-0 active:translate-y-1 rounded-2xl font-black text-base shadow-md transition-all flex items-center justify-center space-x-2"
                   >
                     <Send className="w-5 h-5" />
-                    <span>確認並提交 🎉</span>
+                    <span>{loading ? '上傳中...' : '確認並提交到雲端 🎉'}</span>
                   </button>
                 )}
               </div>
@@ -736,113 +622,70 @@ export default function App() {
         {viewMode === 'admin' && (
           <div className="flex-1 flex flex-col justify-between p-4 bg-[#F7F9FA] overflow-y-auto max-h-[610px]">
             <div className="space-y-4">
-              {/* Admin Banner Header */}
               <div className="bg-[#1CB0F6] text-white p-4 rounded-2xl border-b-4 border-[#1482b8] space-y-2">
                 <div className="flex items-center justify-between">
                   <h3 className="font-black text-base flex items-center">
                     <Shield className="w-5 h-5 mr-1.5 text-yellow-300" />
-                    隊長統籌後台
+                    隊長雲端後台
                   </h3>
-                  <span className="text-[10px] font-black bg-white/20 px-2 py-0.5 rounded-full">
-                    8 人團隊
-                  </span>
+                  <button
+                    onClick={fetchAdminData}
+                    className="text-[10px] font-black bg-white/20 px-2.5 py-1 rounded-full flex items-center gap-1 hover:bg-white/30"
+                  >
+                    <RefreshCw size={10} /> 重新整理
+                  </button>
                 </div>
                 <p className="text-[11px] text-sky-100 font-bold">
-                  檢視隊員填寫狀態，並點擊一鍵算牌進行最佳崗位分配。
+                  已收到 {adminSubmissions.length} 位隊員的雲端填報數據。
                 </p>
               </div>
 
-              {/* Members Submission Status List */}
-              <div className="bg-white p-3.5 rounded-2xl border-2 border-slate-200 space-y-2">
-                <div className="flex items-center justify-between text-xs font-black text-slate-500 mb-1">
-                  <span>隊員填寫進度</span>
-                  <span>{members.filter((m) => m.submitted).length} / {members.length} 已填</span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-1.5 max-h-[140px] overflow-y-auto pr-1">
-                  {members.map((m) => (
-                    <div
-                      key={m.id}
-                      className="p-1.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-[11px]"
-                    >
-                      <span className="font-extrabold text-slate-700 truncate max-w-[80px]">
-                        {m.name}
-                      </span>
-                      {m.submitted ? (
-                        <span className="text-[#58CC02] font-black">✅ 完成</span>
-                      ) : (
-                        <span className="text-amber-500 font-black">⏳ 填寫中</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Auto Scheduling Action */}
-              <button
-                onClick={autoSchedule}
-                className="w-full py-3 bg-[#FFC800] hover:bg-[#ffb700] text-slate-900 border-b-4 border-[#e5a900] active:border-b-0 active:translate-y-1 rounded-2xl font-black text-sm shadow-md transition-all flex items-center justify-center space-x-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>一鍵智能自動排班</span>
-              </button>
-
-              {/* Generated Roster Results Card */}
+              {/* Schedule Results Preview */}
               {scheduleResult && (
-                <div className="bg-white p-4 rounded-2xl border-2 border-slate-200 space-y-3">
-                  <div className="flex items-center justify-between border-b-2 border-slate-100 pb-2">
-                    <span className="font-black text-xs text-slate-800">本月自動排班成果</span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-black text-xs text-slate-500 uppercase tracking-wider">📅 自動排班結果</h4>
                     <button
                       onClick={copyBroadcastText}
-                      className="px-2.5 py-1 bg-[#58CC02] text-white border-b-2 border-[#46A302] rounded-xl font-black text-[10px] flex items-center space-x-1"
+                      className="px-3 py-1.5 bg-[#58CC02] text-white rounded-xl text-xs font-black shadow-sm flex items-center gap-1 hover:bg-[#46A302]"
                     >
-                      <Copy className="w-3 h-3" />
-                      <span>複製廣播訊息</span>
+                      <Copy size={12} /> {copiedNotification ? '已複製！' : '一鍵複製名單'}
                     </button>
                   </div>
 
-                  {copiedNotification && (
-                    <div className="text-[10px] font-black text-[#46A302] bg-emerald-50 p-1.5 rounded-lg text-center animate-pulse">
-                      ✅ 已複製廣播訊息！可貼至 WhatsApp 發佈。
-                    </div>
-                  )}
-
-                  {/* Sunday Cards Roster */}
-                  <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
-                    {SUNDAYS.map((s) => {
-                      const roster = scheduleResult.assignments[s.id];
-                      return (
-                        <div key={s.id} className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 space-y-1.5">
-                          <div className="font-black text-xs text-slate-800 border-b border-slate-200 pb-1 flex justify-between">
-                            <span>{s.label}</span>
-                            <span className="text-[#1CB0F6]">陣容</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-1 text-[10px]">
-                            {ROLES.map((r) => {
-                              const assigned = roster ? roster[r.id] : null;
-                              return (
-                                <div key={r.id} className="flex items-center justify-between bg-white p-1 rounded border border-slate-100">
-                                  <span className="text-slate-500 font-bold">{r.icon} {r.shortName}:</span>
-                                  <span className="font-black text-slate-800">{assigned ? assigned.name.split(' ')[0] : '缺人'}</span>
-                                </div>
-                              );
-                            })}
-                          </div>
+                  {SUNDAYS.map((s) => {
+                    const roster = scheduleResult.assignments[s.id];
+                    return (
+                      <div key={s.id} className="bg-white p-3 rounded-2xl border-2 border-slate-200 shadow-sm space-y-2">
+                        <div className="font-black text-xs text-[#1CB0F6] border-b border-slate-100 pb-1 flex justify-between">
+                          <span>{s.label}</span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <div className="grid grid-cols-2 gap-1.5 text-xs">
+                          {ROLES.map((r) => {
+                            const assignedMember = roster ? roster[r.id] : null;
+                            return (
+                              <div key={r.id} className="p-1.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                                <span className="font-bold text-slate-500">{r.icon} {r.shortName}</span>
+                                <span className={`font-black ${assignedMember ? 'text-slate-800' : 'text-rose-500'}`}>
+                                  {assignedMember ? assignedMember.name : '⚠️ 缺人'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
 
-            {/* Back Button */}
-            <div className="pt-3">
+            <div className="pt-3 border-t border-slate-200 mt-4">
               <button
                 onClick={() => setViewMode('wizard')}
-                className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 border-b-4 border-slate-300 rounded-2xl font-black text-xs active:translate-y-0.5 transition-all"
+                className="w-full py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl font-black text-xs transition-all"
               >
-                ← 返回問卷填寫頁
+                返回填報問卷
               </button>
             </div>
           </div>
