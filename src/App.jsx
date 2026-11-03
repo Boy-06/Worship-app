@@ -10,16 +10,16 @@ export default function App() {
 // 10 個保證順利載入、自然圓潤的年青人頭像
   // 10 個穩定且高質素的年青人頭像
   const youthAvatars = [
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Caleb&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Jasmine&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucas&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Mia&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Ethan&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Noah&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Chloe&backgroundColor=c0aede',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(1).jpg‘,
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(2).jpg',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(3).jpg',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(4).jpg',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(5).jpg',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(6).jpg',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(7).jpg',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(8).jpg',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(9).jpg',
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850.jpg',
   ];
 
   const [availability, setAvailability] = useState({
