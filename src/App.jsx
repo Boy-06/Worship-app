@@ -33,6 +33,11 @@ export default function App() {
     'https://api.dicebear.com/10.x/notionists-neutral/svg?seed=61zfh8u6',
     'https://api.dicebear.com/10.x/notionists-neutral/svg?seed=hdlje6bi',
     'https://api.dicebear.com/10.x/notionists-neutral/svg?backgroundColor=ff5d8f,ffb703,43aa8b,4d96ff,b57bff&seed=y3qiqbse',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?backgroundColor=ff5d8f,ffb703,43aa8b,4d96ff,b57bff&seed=zsqyde93',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?backgroundColor=ff5d8f,ffb703,43aa8b,4d96ff,b57bff&seed=59qv5jc8',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?backgroundColor=ff5d8f,ffb703,43aa8b,4d96ff,b57bff&seed=z7nn68is',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?backgroundColor=ff5d8f,ffb703,43aa8b,4d96ff,b57bff&seed=vbf84l53',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?backgroundColor=ff5d8f,ffb703,43aa8b,4d96ff,b57bff&seed=vkbjnu6e',
   ];
 
   const [availability, setAvailability] = useState({
