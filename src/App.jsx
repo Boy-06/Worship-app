@@ -262,7 +262,7 @@ export default function App() {
             <div className="bg-slate-900/80 border border-slate-700 p-6 rounded-xl space-y-4">
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 rounded-full bg-white p-1 border-2 border-blue-500 overflow-hidden">
-                  <img src={youthAvatars[selectedAvatar]} alt="Avatar" className="w-full h-full object-cover" />
+                  <img src={youthAvatars[selectedAvatar]} alt="Avatar" className="w-full h-full object-contain bg-white rounded-full p-1" />
                 </div>
                 <div>
                   <div className="text-xs text-slate-400">敬拜者</div>
