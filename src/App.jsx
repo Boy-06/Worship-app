@@ -10,15 +10,15 @@ export default function App() {
 // 10 個保證順利載入、自然圓潤的年青人頭像
   // 10 個穩定且高質素的年青人頭像
  const youthAvatars = [
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost2&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost3&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost4&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost5&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost6&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost7&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost8&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost9&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost10&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=ev65u55b',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=i0v1nrja',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=on1evvov',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=6hdm6mol',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=ks6a0eok',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=s8g8uswn',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=hkw1645c',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=po8zylmy',
+    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=06og1tfq',
   ];
 
   const [availability, setAvailability] = useState({
