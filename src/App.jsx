@@ -2,10 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from './supabase';
 
 export default function App() {
-  const [step, setStep] = useState(1); // 1: 名字/頭像, 2: 選擇意向, 3: 確認送出, 4: 完成
+  const [step, setStep] = useState(1); // 1: 名字/頭像, 2: 選擇崗位, 3: 選擇意向, 4: 確認送出, 5: 完成
   const [name, setName] = useState('');
-  const [savedProfiles, setSavedProfiles] = useState([]); // 儲存 { name, avatarIndex }
+  const [savedProfiles, setSavedProfiles] = useState([]); // 儲存 { name, avatarIndex, role }
   const [selectedAvatar, setSelectedAvatar] = useState(0);
+  const [role, setRole] = useState('Wocal'); // 預設崗位
+
+  const rolesList = [
+    { id: 'Worship Leader', label: '👑 Worship Leader' },
+    { id: 'Vocal', label: '🎤 Vocal' },
+    { id: 'Guitarist', label: '🎸 Guitarist' },
+    { id: 'Bass', label: '🎸 Bass' },
+    { id: 'Drum', label: '🥁 Drum' },
+    { id: 'Keys', label: '🎹 Keys' },
+  ];
 
   // 10 個穩定載入的頭像
   const youthAvatars = [
@@ -31,7 +41,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [allSubmissions, setAllSubmissions] = useState([]); // 所有已提交者的數據
 
-  // 1. 讀取本地儲存過的名字與頭像
+  // 1. 讀取本地儲存過的名字、頭像與崗位
   useEffect(() => {
     try {
       const stored = localStorage.getItem('worship_saved_profiles');
@@ -49,25 +59,28 @@ export default function App() {
     setSelectedAvatar(randomIndex);
   };
 
-  // 3. 點擊歷史紀錄：同時自動選擇「名字」和「對應頭像」
+  // 3. 點擊歷史紀錄：同時自動選擇「名字」、「對應頭像」與「崗位」
   const handleSelectSavedProfile = (profile) => {
     setName(profile.name);
     if (profile.avatarIndex !== undefined) {
       setSelectedAvatar(profile.avatarIndex);
     }
+    if (profile.role) {
+      setRole(profile.role);
+    }
   };
 
-  // 4. 下一步：記錄名字與頭像到 LocalStorage
-  const handleNextStep = () => {
+  // 4. 第一步完成：記錄名字、頭像與崗位到 LocalStorage
+  const handleNextStep1 = () => {
     if (!name.trim()) {
       alert('入你個名');
       return;
     }
     const trimmed = name.trim();
     
-    // 移除舊的同名紀錄，加入最新紀錄（包含名字與頭像索引）
+    // 儲存至本地快取
     let updatedProfiles = savedProfiles.filter(p => p.name !== trimmed);
-    updatedProfiles = [{ name: trimmed, avatarIndex: selectedAvatar }, ...updatedProfiles].slice(0, 5);
+    updatedProfiles = [{ name: trimmed, avatarIndex: selectedAvatar, role: role }, ...updatedProfiles].slice(0, 5);
     
     setSavedProfiles(updatedProfiles);
     try {
@@ -85,7 +98,7 @@ export default function App() {
     }));
   };
 
-  // 5. 提交至 Supabase 並載入所有提交資料計算陣容組合
+  // 5. 提交至 Supabase（包含 role 欄位）
   const handleSubmit = async () => {
     setLoading(true);
     setErrorMessage('');
@@ -94,6 +107,7 @@ export default function App() {
         {
           name: name.trim(),
           avatar_index: selectedAvatar,
+          role: role,
           availability: availability
         }
       ]);
@@ -109,7 +123,7 @@ export default function App() {
         setAllSubmissions(fetchResults);
       }
 
-      setStep(4);
+      setStep(5);
     } catch (err) {
       console.error('Submit error:', err.message);
       setErrorMessage(`提交時發生錯誤：${err.message}`);
@@ -118,7 +132,7 @@ export default function App() {
     }
   };
 
-  // 6. 計算每場敬拜的可用陣容組合
+  // 6. 計算每場敬拜的可用陣容組合（包含崗位顯示）
   const renderTeamCombinations = () => {
     const dateKeys = Object.keys(availability);
     
@@ -129,13 +143,12 @@ export default function App() {
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {dateKeys.map(date => {
-            // 找出該天 availability[date] === 'ok' 的所有隊員
             const availableMembers = allSubmissions.filter(sub => {
               return sub.availability && sub.availability[date] === 'ok';
             });
 
             return (
-              <div key={date} className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-sm">
+              <div key={date} className="bg-slate-50 border border-slate-200 rounded-xl p-4 shadow-2xs">
                 <div className="font-bold text-blue-700 text-sm mb-2 flex items-center justify-between">
                   <span>{date}</span>
                   <span className="text-xs font-normal bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
@@ -145,13 +158,16 @@ export default function App() {
                 {availableMembers.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {availableMembers.map((member, i) => (
-                      <div key={i} className="flex items-center space-x-1.5 bg-white border border-slate-200 shadow-2xs rounded-full px-2.5 py-1">
+                      <div key={i} className="flex items-center space-x-1.5 bg-white border border-slate-200 rounded-full px-2.5 py-1 shadow-2xs">
                         <img 
                           src={youthAvatars[member.avatar_index] || youthAvatars[0]} 
                           alt="avatar" 
                           className="w-5 h-5 rounded-full object-contain"
                         />
-                        <span className="text-xs font-medium text-slate-700">{member.name}</span>
+                        <span className="text-xs font-bold text-slate-800">{member.name}</span>
+                        <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-semibold">
+                          {member.role || 'Vocal'}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -168,22 +184,22 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full bg-slate-50 text-slate-800 flex flex-col justify-between font-sans">
-      {/* 頂部 Header：藍底白字 */}
-      <header className="w-full bg-white border-b border-slate-200 px-6 py-4 shadow-sm">
+      {/* 頂部 Header */}
+      <header className="w-full bg-white border-b border-slate-200 px-6 py-4 shadow-2xs">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <span className="text-2xl">🎵</span>
             <h1 className="text-xl font-extrabold tracking-wide text-blue-600">敬拜 Schedule</h1>
           </div>
           <div className="text-sm font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-            步驟 {step} / 4
+            步驟 {step} / 5
           </div>
         </div>
         {/* 進度條 */}
         <div className="max-w-3xl mx-auto mt-3 w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
           <div 
             className="bg-blue-600 h-full transition-all duration-300" 
-            style={{ width: `${(step / 4) * 100}%` }}
+            style={{ width: `${(step / 5) * 100}%` }}
           ></div>
         </div>
       </header>
@@ -225,10 +241,10 @@ export default function App() {
               />
             </div>
 
-            {/* 快速選取曾記錄的名字與頭像 */}
+            {/* 快速選取曾記錄的名字、頭像與崗位 */}
             {savedProfiles.length > 0 && (
               <div className="space-y-2">
-                <span className="text-xs text-slate-500 font-bold">你之前用過嘅名（點擊帶入頭像）：</span>
+                <span className="text-xs text-slate-500 font-bold">你之前用過嘅名（點擊帶入數據）：</span>
                 <div className="flex flex-wrap gap-2">
                   {savedProfiles.map((profile, index) => (
                     <button
@@ -246,6 +262,7 @@ export default function App() {
                         className="w-4 h-4 rounded-full"
                       />
                       <span>{profile.name}</span>
+                      {profile.role && <span className="opacity-75">({profile.role})</span>}
                     </button>
                   ))}
                 </div>
@@ -253,16 +270,55 @@ export default function App() {
             )}
 
             <button
-              onClick={handleNextStep}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 transition duration-200 text-lg active:scale-98"
+              onClick={handleNextStep1}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-lg shadow-blue-200 transition text-lg"
             >
               下一步 ➡️
             </button>
           </div>
         )}
 
-        {/* 步驟二：選擇服侍意向 */}
+        {/* 步驟二：選擇崗位 (Role) */}
         {step === 2 && (
+          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+            <h2 className="text-2xl font-black text-center text-slate-800">你主要崗位/樂器係？</h2>
+            
+            <div className="grid grid-cols-2 gap-3">
+              {rolesList.map((r) => (
+                <button
+                  key={r.id}
+                  onClick={() => setRole(r.id)}
+                  className={`p-4 rounded-2xl border font-extrabold text-left transition flex items-center justify-between ${
+                    role === r.id
+                      ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
+                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <span>{r.label}</span>
+                  {role === r.id && <span className="text-sm">✓</span>}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex space-x-3 pt-4">
+              <button
+                onClick={() => setStep(1)}
+                className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 rounded-2xl transition"
+              >
+                ⬅️ 上一步
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                className="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-blue-200 transition"
+              >
+                下一步 ➡️
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* 步驟三：選擇服侍意向 */}
+        {step === 3 && (
           <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
             <div className="flex items-center justify-between border-b pb-4">
               <div className="flex items-center space-x-3">
@@ -271,13 +327,16 @@ export default function App() {
                   alt="Avatar" 
                   className="w-10 h-10 rounded-full border-2 border-blue-500" 
                 />
-                <h2 className="text-xl font-extrabold text-slate-800">早晨，{name}！請揀</h2>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-800">{name} ({role})</h2>
+                  <span className="text-xs text-slate-400">請點選你有空服侍的日期</span>
+                </div>
               </div>
               <button 
                 onClick={() => setStep(1)} 
                 className="text-xs text-blue-600 font-bold hover:underline"
               >
-                修改名
+                修改資料
               </button>
             </div>
 
@@ -316,13 +375,13 @@ export default function App() {
 
             <div className="flex space-x-3 pt-2">
               <button
-                onClick={() => setStep(1)}
+                onClick={() => setStep(2)}
                 className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 rounded-2xl transition"
               >
                 ⬅️ 上一步
               </button>
               <button
-                onClick={() => setStep(3)}
+                onClick={() => setStep(4)}
                 className="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-blue-200 transition"
               >
                 下一步 ➡️
@@ -331,8 +390,8 @@ export default function App() {
           </div>
         )}
 
-        {/* 步驟三：確認資料 */}
-        {step === 3 && (
+        {/* 步驟四：確認資料 */}
+        {step === 4 && (
           <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
             <h2 className="text-2xl font-black text-center text-slate-800">確認你填得啱</h2>
             
@@ -342,8 +401,11 @@ export default function App() {
                   <img src={youthAvatars[selectedAvatar]} alt="Avatar" className="w-full h-full object-contain bg-white rounded-full" />
                 </div>
                 <div>
-                  <div className="text-xs text-blue-600 font-bold">敬拜者</div>
+                  <div className="text-xs text-blue-600 font-bold">敬拜者資訊</div>
                   <div className="text-xl font-black text-slate-800">{name}</div>
+                  <div className="text-xs font-semibold bg-blue-200 text-blue-800 px-2 py-0.5 rounded-md inline-block mt-1">
+                    {role}
+                  </div>
                 </div>
               </div>
 
@@ -368,7 +430,7 @@ export default function App() {
 
             <div className="flex space-x-3">
               <button
-                onClick={() => setStep(2)}
+                onClick={() => setStep(3)}
                 disabled={loading}
                 className="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-3.5 rounded-2xl transition"
               >
@@ -392,13 +454,13 @@ export default function App() {
           </div>
         )}
 
-        {/* 步驟四：完成送出與組合建議 */}
-        {step === 4 && (
+        {/* 步驟五：完成送出與組合建議 */}
+        {step === 5 && (
           <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl text-center space-y-6">
             <div className="text-6xl animate-bounce">🎉</div>
             <h2 className="text-2xl font-black text-blue-600">提交成功！</h2>
             <p className="text-slate-600 font-medium text-sm">
-              多謝你 {name}！已經幫你記低咗啦。
+              多謝你 {name}（{role}）！已經幫你記低咗啦。
             </p>
 
             {/* 顯示所有已提交的可能服侍組合 */}
