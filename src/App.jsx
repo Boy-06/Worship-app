@@ -7,18 +7,18 @@ export default function App() {
   const [savedNames, setSavedNames] = useState([]);
   const [selectedAvatar, setSelectedAvatar] = useState(0);
   
-  // 10 個不同風格的年青人頭像 (使用 DiceBear avataaars)
+// 精選 10 個清新自然風格的年青人頭像（風格 match 圖片）
   const youthAvatars = [
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Jasmine&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Caleb&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Zoe&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Lucas&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Mia&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Ethan&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Chloe&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=Noah&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Liam&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Oliver&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Sophia&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Ethan&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Lucas&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Mia&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Aria&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Noah&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Isabella&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/personas/svg?seed=Leo&backgroundColor=c0aede'
   ];
 
   const [availability, setAvailability] = useState({
