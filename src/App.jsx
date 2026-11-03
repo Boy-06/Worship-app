@@ -9,17 +9,16 @@ export default function App() {
   
 // 10 個保證順利載入、自然圓潤的年青人頭像
   // 10 個穩定且高質素的年青人頭像
-  const youthAvatars = [
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(1).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(2).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(3).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(4).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(5).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(6).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(7).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(8).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(9).jpg',
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850.jpg',
+ const youthAvatars = [
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost2&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost3&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost4&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost5&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost6&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost7&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost8&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost9&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/bottts-neutral/svg?seed=Ghost10&backgroundColor=ffdfbf',
   ];
 
   const [availability, setAvailability] = useState({
