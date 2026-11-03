@@ -229,7 +229,6 @@ export default function App() {
               <div className="font-black text-blue-700 text-base mb-3 border-b pb-2 flex items-center justify-between">
                 <span>📅 {date} 陣容名單</span>
                 <span className="text-xs font-normal text-slate-500 bg-white px-2 py-0.5 rounded-md border">
-                  每崗位限 1 人輪替
                 </span>
               </div>
 
