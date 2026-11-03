@@ -167,12 +167,12 @@ export default function App() {
     }
   };
 
-  // 9. 渲染總更表 / 服侍陣容列表（帶刪除按鈕）
+  // 9. 渲染總更表 / 服侍陣容列表
   const renderTeamCombinations = () => {
     const dateKeys = Object.keys(availability);
     
     return (
-      <div className="space-y-4 text-left mt-4">
+      <div className="space-y-4 text-left mt-4 tracking-normal">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {dateKeys.map(date => {
             const availableMembers = allSubmissions.filter(sub => {
@@ -182,29 +182,29 @@ export default function App() {
             return (
               <div key={date} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-2xs">
                 <div className="font-bold text-blue-700 text-sm mb-3 flex items-center justify-between border-b pb-2">
-                  <span>📅 {date}</span>
-                  <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full">
+                  <span className="whitespace-nowrap">📅 {date}</span>
+                  <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full whitespace-nowrap">
                     {availableMembers.length} 人 OK
                   </span>
                 </div>
                 {availableMembers.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {availableMembers.map((member) => (
-                      <div key={member.id || member.name} className="flex items-center space-x-1.5 bg-white border border-slate-200 rounded-full pl-2 pr-1.5 py-1 shadow-2xs group">
+                      <div key={member.id || member.name} className="flex items-center space-x-1.5 bg-white border border-slate-200 rounded-full pl-2 pr-1.5 py-1 shadow-2xs">
                         <img 
                           src={youthAvatars[member.avatar_index] || youthAvatars[0]} 
                           alt="avatar" 
-                          className="w-5 h-5 rounded-full object-contain"
+                          className="w-5 h-5 rounded-full object-contain shrink-0"
                         />
-                        <span className="text-xs font-bold text-slate-800">{member.name}</span>
-                        <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-semibold">
+                        <span className="text-xs font-bold text-slate-800 whitespace-nowrap">{member.name}</span>
+                        <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-semibold whitespace-nowrap">
                           {member.role || 'Vocal'}
                         </span>
                         {/* 刪除按鈕 */}
                         <button
                           onClick={() => handleDeleteMember(member.id, member.name)}
                           title="刪除此紀錄"
-                          className="w-4 h-4 text-[10px] bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-400 rounded-full flex items-center justify-center transition ml-1"
+                          className="w-4 h-4 text-[10px] bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-400 rounded-full flex items-center justify-center transition ml-1 shrink-0"
                         >
                           ✕
                         </button>
@@ -223,20 +223,20 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-slate-50 text-slate-800 flex flex-col justify-between font-sans">
+    <div className="min-h-screen w-full bg-slate-50 text-slate-800 flex flex-col justify-between font-sans tracking-normal leading-normal text-left">
       {/* 頂部 Header & 導覽標籤 */}
-      <header className="w-full bg-white border-b border-slate-200 px-6 py-4 shadow-2xs sticky top-0 z-10">
+      <header className="w-full bg-white border-b border-slate-200 px-4 sm:px-6 py-4 shadow-2xs sticky top-0 z-10">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <span className="text-2xl">🎵</span>
-            <h1 className="text-xl font-extrabold tracking-wide text-blue-600">敬拜 Schedule</h1>
+          <div className="flex items-center space-x-1.5">
+            <span className="text-xl sm:text-2xl">🎵</span>
+            <h1 className="text-lg sm:text-xl font-extrabold text-blue-600 whitespace-nowrap">敬拜 Schedule</h1>
           </div>
           
           {/* 導覽按鈕：切換填寫流程與總更表 */}
-          <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200">
+          <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shrink-0">
             <button
               onClick={() => setActiveTab('form')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-extrabold transition whitespace-nowrap ${
                 activeTab === 'form' 
                   ? 'bg-blue-600 text-white shadow-2xs' 
                   : 'text-slate-600 hover:text-slate-900'
@@ -249,7 +249,7 @@ export default function App() {
                 setActiveTab('schedule');
                 fetchSubmissions();
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1 ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-extrabold transition flex items-center gap-1 whitespace-nowrap ${
                 activeTab === 'schedule' 
                   ? 'bg-blue-600 text-white shadow-2xs' 
                   : 'text-slate-600 hover:text-slate-900'
@@ -277,14 +277,14 @@ export default function App() {
       </header>
 
       {/* 主要內容區 */}
-      <main className="flex-1 max-w-2xl w-full mx-auto p-6 flex flex-col justify-center">
+      <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
         
         {/* === 頁面一：填寫流程 (FORM TAB) === */}
         {activeTab === 'form' && (
           <>
             {/* 步驟一：名字與頭像設定 */}
             {step === 1 && (
-              <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <h2 className="text-2xl font-black text-center text-slate-800">你係邊個？</h2>
                 
                 {/* 頭像預覽與隨機切換 */}
@@ -358,7 +358,7 @@ export default function App() {
 
             {/* 步驟二：選擇崗位 (Role) - 可複選 */}
             {step === 2 && (
-              <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-center text-slate-800">你可以服侍嘅崗位/樂器？</h2>
                   <p className="text-xs text-center text-slate-400 mt-1">（可多選）</p>
@@ -371,14 +371,14 @@ export default function App() {
                       <button
                         key={r.id}
                         onClick={() => toggleRole(r.id)}
-                        className={`p-4 rounded-2xl border font-extrabold text-left transition flex items-center justify-between ${
+                        className={`p-3.5 sm:p-4 rounded-2xl border font-extrabold text-left transition flex items-center justify-between ${
                           isSelected
                             ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
                             : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
                         }`}
                       >
-                        <span>{r.label}</span>
-                        <span className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
+                        <span className="text-xs sm:text-sm">{r.label}</span>
+                        <span className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ml-1 ${
                           isSelected ? 'bg-white text-blue-600' : 'border border-slate-300 bg-white'
                         }`}>
                           {isSelected ? '✓' : ''}
@@ -407,13 +407,13 @@ export default function App() {
 
             {/* 步驟三：選擇服侍意向 */}
             {step === 3 && (
-              <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <div className="flex items-center justify-between border-b pb-4">
                   <div className="flex items-center space-x-3">
                     <img 
                       src={youthAvatars[selectedAvatar]} 
                       alt="Avatar" 
-                      className="w-10 h-10 rounded-full border-2 border-blue-500" 
+                      className="w-10 h-10 rounded-full border-2 border-blue-500 shrink-0" 
                     />
                     <div>
                       <h2 className="text-lg font-extrabold text-slate-800">{name}</h2>
@@ -422,7 +422,7 @@ export default function App() {
                   </div>
                   <button 
                     onClick={() => setStep(1)} 
-                    className="text-xs text-blue-600 font-bold hover:underline"
+                    className="text-xs text-blue-600 font-bold hover:underline shrink-0"
                   >
                     修改資料
                   </button>
@@ -433,11 +433,11 @@ export default function App() {
                     const currentStatus = availability[dateKey];
                     return (
                       <div key={dateKey} className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center justify-between shadow-2xs">
-                        <span className="font-bold text-slate-700">{dateKey}</span>
+                        <span className="font-bold text-slate-700 text-sm sm:text-base">{dateKey}</span>
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleStatusChange(dateKey, 'ok')}
-                            className={`px-4 py-2 rounded-xl text-xs font-black transition ${
+                            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition ${
                               currentStatus === 'ok' 
                                 ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200' 
                                 : 'bg-white text-slate-400 border border-slate-200'
@@ -447,7 +447,7 @@ export default function App() {
                           </button>
                           <button
                             onClick={() => handleStatusChange(dateKey, 'no')}
-                            className={`px-4 py-2 rounded-xl text-xs font-black transition ${
+                            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-black transition ${
                               currentStatus === 'no' 
                                 ? 'bg-rose-500 text-white shadow-md shadow-rose-200' 
                                 : 'bg-white text-slate-400 border border-slate-200'
@@ -480,12 +480,12 @@ export default function App() {
 
             {/* 步驟四：確認資料 */}
             {step === 4 && (
-              <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <h2 className="text-2xl font-black text-center text-slate-800">確認你填得啱</h2>
                 
                 <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-2xl space-y-4">
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 rounded-full bg-white p-1 border-2 border-blue-500 shadow-sm overflow-hidden">
+                    <div className="w-16 h-16 rounded-full bg-white p-1 border-2 border-blue-500 shadow-sm overflow-hidden shrink-0">
                       <img src={youthAvatars[selectedAvatar]} alt="Avatar" className="w-full h-full object-contain bg-white rounded-full" />
                     </div>
                     <div>
@@ -544,7 +544,7 @@ export default function App() {
 
             {/* 步驟五：完成送出頁面 */}
             {step === 5 && (
-              <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl text-center space-y-6">
+              <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl text-center space-y-6">
                 <div className="text-6xl animate-bounce">🎉</div>
                 <h2 className="text-2xl font-black text-blue-600">提交成功！</h2>
                 <p className="text-slate-600 font-medium text-sm">
@@ -575,17 +575,17 @@ export default function App() {
 
         {/* === 頁面二：查看總更表 (SCHEDULE TAB) === */}
         {activeTab === 'schedule' && (
-          <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
             <div className="flex items-center justify-between border-b pb-4">
               <div>
-                <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
                   <span>🤝</span> 敬拜服侍隊伍總覽
                 </h2>
                 <p className="text-xs text-slate-400 mt-1">點擊成員頭像旁的 ✕ 可直接刪除該筆記錄</p>
               </div>
               <button
                 onClick={fetchSubmissions}
-                className="text-xs bg-slate-100 hover:bg-slate-200 text-blue-600 font-bold px-3 py-1.5 rounded-xl transition border border-slate-200"
+                className="text-xs bg-slate-100 hover:bg-slate-200 text-blue-600 font-bold px-3 py-1.5 rounded-xl transition border border-slate-200 shrink-0"
               >
                 🔄 重新整理
               </button>
