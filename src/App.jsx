@@ -29,6 +29,10 @@ export default function App() {
     'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=hkw1645c',
     'https://api.dicebear.com/10.x/fun-emoji/svg?seed=cshuztbl',
     'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=06og1tfq',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?seed=jj2e38hj',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?seed=61zfh8u6',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?seed=hdlje6bi',
+    'https://api.dicebear.com/10.x/notionists-neutral/svg?backgroundColor=ff5d8f,ffb703,43aa8b,4d96ff,b57bff&seed=y3qiqbse',
   ];
 
   const [availability, setAvailability] = useState({
