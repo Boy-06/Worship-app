@@ -7,17 +7,18 @@ export default function App() {
   const [savedNames, setSavedNames] = useState([]);
   const [selectedAvatar, setSelectedAvatar] = useState(0);
   
+// 10 個保證順利載入、自然圓潤的年青人頭像
   const youthAvatars = [
-    'https://api.dicebear.com/7.x/micah/svg?seed=Felix&skinColor=f9c9b6&hair=full,pixie,shortCombover&hairColor=0e0e0e,6a4e35,d08b5b&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Aneka&skinColor=f9c9b6&hair=full,pixie,straightFont&hairColor=0e0e0e,6a4e35&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Caleb&skinColor=f9c9b6&hair=shortCombover,full&hairColor=6a4e35,d08b5b&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Jasmine&skinColor=f9c9b6&hair=straightFont,full&hairColor=0e0e0e,d08b5b&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Lucas&skinColor=f9c9b6&hair=pixie,shortCombover&hairColor=0e0e0e,6a4e35&backgroundColor=c0aede',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Mia&skinColor=f9c9b6&hair=full,straightFont&hairColor=6a4e35,d08b5b&backgroundColor=b6e3f4',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Ethan&skinColor=f9c9b6&hair=shortCombover,pixie&hairColor=0e0e0e&backgroundColor=ffd5dc',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Zoe&skinColor=f9c9b6&hair=straightFont,full&hairColor=0e0e0e,6a4e35&backgroundColor=d1d4f9',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Noah&skinColor=f9c9b6&hair=pixie,shortCombover&hairColor=6a4e35,d08b5b&backgroundColor=ffdfbf',
-    'https://api.dicebear.com/7.x/micah/svg?seed=Chloe&skinColor=f9c9b6&hair=full,straightFont&hairColor=0e0e0e,d08b5b&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Felix&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Aneka&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Caleb&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Jasmine&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Lucas&backgroundColor=c0aede',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Mia&backgroundColor=b6e3f4',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Ethan&backgroundColor=ffd5dc',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Zoe&backgroundColor=d1d4f9',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Noah&backgroundColor=ffdfbf',
+    'https://api.dicebear.com/7.x/micah/svg?seed=Chloe&backgroundColor=c0aede',
   ];
 
   const [availability, setAvailability] = useState({
