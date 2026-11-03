@@ -10,7 +10,7 @@ export default function App() {
 // 10 個保證順利載入、自然圓潤的年青人頭像
   // 10 個穩定且高質素的年青人頭像
   const youthAvatars = [
-    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(1).jpg‘,
+    'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(1).jpg',
     'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(2).jpg',
     'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(3).jpg',
     'https://ulavwdyoklsiwxcsmqjf.supabase.co/storage/v1/object/public/Public%20bucket/b38c5ec6-0121-4321-a1bb-464101311850%20(4).jpg',
