@@ -4,9 +4,9 @@ import { supabase } from './supabase';
 export default function App() {
   const [step, setStep] = useState(1); // 1: 名字/頭像, 2: 選擇崗位, 3: 選擇意向, 4: 確認送出, 5: 完成
   const [name, setName] = useState('');
-  const [savedProfiles, setSavedProfiles] = useState([]); // 儲存 { name, avatarIndex, role }
+  const [savedProfiles, setSavedProfiles] = useState([]); // 儲存 { name, avatarIndex, roles }
   const [selectedAvatar, setSelectedAvatar] = useState(0);
-  const [role, setRole] = useState('Wocal'); // 預設崗位
+  const [roles, setRoles] = useState(['Vocal']); // 預設崗位（改為陣列支援複選）
 
   const rolesList = [
     { id: 'Worship Leader', label: '👑 Worship Leader' },
@@ -65,12 +65,23 @@ export default function App() {
     if (profile.avatarIndex !== undefined) {
       setSelectedAvatar(profile.avatarIndex);
     }
-    if (profile.role) {
-      setRole(profile.role);
+    if (profile.roles && Array.isArray(profile.roles)) {
+      setRoles(profile.roles);
+    } else if (profile.role) {
+      setRoles([profile.role]);
     }
   };
 
-  // 4. 第一步完成：記錄名字、頭像與崗位到 LocalStorage
+  // 4. 切換崗位選擇狀態 (複選邏輯)
+  const toggleRole = (roleId) => {
+    setRoles(prev => 
+      prev.includes(roleId)
+        ? prev.filter(r => r !== roleId)
+        : [...prev, roleId]
+    );
+  };
+
+  // 5. 第一步完成：記錄名字、頭像與崗位到 LocalStorage
   const handleNextStep1 = () => {
     if (!name.trim()) {
       alert('入你個名');
@@ -80,7 +91,7 @@ export default function App() {
     
     // 儲存至本地快取
     let updatedProfiles = savedProfiles.filter(p => p.name !== trimmed);
-    updatedProfiles = [{ name: trimmed, avatarIndex: selectedAvatar, role: role }, ...updatedProfiles].slice(0, 5);
+    updatedProfiles = [{ name: trimmed, avatarIndex: selectedAvatar, roles: roles }, ...updatedProfiles].slice(0, 5);
     
     setSavedProfiles(updatedProfiles);
     try {
@@ -91,6 +102,14 @@ export default function App() {
     setStep(2);
   };
 
+  const handleNextStep2 = () => {
+    if (roles.length === 0) {
+      alert('請至少選擇一個崗位/樂器！');
+      return;
+    }
+    setStep(3);
+  };
+
   const handleStatusChange = (dateKey, status) => {
     setAvailability(prev => ({
       ...prev,
@@ -98,7 +117,7 @@ export default function App() {
     }));
   };
 
-  // 5. 提交至 Supabase（包含 role 欄位）
+  // 6. 提交至 Supabase（將複選陣列轉成逗號隔開的字串）
   const handleSubmit = async () => {
     setLoading(true);
     setErrorMessage('');
@@ -107,7 +126,7 @@ export default function App() {
         {
           name: name.trim(),
           avatar_index: selectedAvatar,
-          role: role,
+          role: roles.join(', '), // 將複選崗位合成字串
           availability: availability
         }
       ]);
@@ -132,7 +151,7 @@ export default function App() {
     }
   };
 
-  // 6. 計算每場敬拜的可用陣容組合（包含崗位顯示）
+  // 7. 計算每場敬拜的可用陣容組合（包含複選崗位顯示）
   const renderTeamCombinations = () => {
     const dateKeys = Object.keys(availability);
     
@@ -246,25 +265,28 @@ export default function App() {
               <div className="space-y-2">
                 <span className="text-xs text-slate-500 font-bold">你之前用過嘅名（點擊帶入數據）：</span>
                 <div className="flex flex-wrap gap-2">
-                  {savedProfiles.map((profile, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSelectSavedProfile(profile)}
-                      className={`text-xs px-3 py-2 rounded-xl border font-bold transition flex items-center gap-1.5 shadow-2xs ${
-                        name === profile.name 
-                          ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
-                          : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
-                      }`}
-                    >
-                      <img 
-                        src={youthAvatars[profile.avatarIndex] || youthAvatars[0]} 
-                        alt="icon" 
-                        className="w-4 h-4 rounded-full"
-                      />
-                      <span>{profile.name}</span>
-                      {profile.role && <span className="opacity-75">({profile.role})</span>}
-                    </button>
-                  ))}
+                  {savedProfiles.map((profile, index) => {
+                    const displayRoles = profile.roles ? profile.roles.join(', ') : profile.role;
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleSelectSavedProfile(profile)}
+                        className={`text-xs px-3 py-2 rounded-xl border font-bold transition flex items-center gap-1.5 shadow-2xs ${
+                          name === profile.name 
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-md' 
+                            : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        <img 
+                          src={youthAvatars[profile.avatarIndex] || youthAvatars[0]} 
+                          alt="icon" 
+                          className="w-4 h-4 rounded-full"
+                        />
+                        <span>{profile.name}</span>
+                        {displayRoles && <span className="opacity-75">({displayRoles})</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -278,26 +300,36 @@ export default function App() {
           </div>
         )}
 
-        {/* 步驟二：選擇崗位 (Role) */}
+        {/* 步驟二：選擇崗位 (Role) - 可複選 */}
         {step === 2 && (
           <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-xl space-y-6">
-            <h2 className="text-2xl font-black text-center text-slate-800">你主要崗位/樂器係？</h2>
+            <div>
+              <h2 className="text-2xl font-black text-center text-slate-800">你可以服侍嘅崗位/樂器？</h2>
+              <p className="text-xs text-center text-slate-400 mt-1">（可多選）</p>
+            </div>
             
             <div className="grid grid-cols-2 gap-3">
-              {rolesList.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setRole(r.id)}
-                  className={`p-4 rounded-2xl border font-extrabold text-left transition flex items-center justify-between ${
-                    role === r.id
-                      ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
-                      : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  <span>{r.label}</span>
-                  {role === r.id && <span className="text-sm">✓</span>}
-                </button>
-              ))}
+              {rolesList.map((r) => {
+                const isSelected = roles.includes(r.id);
+                return (
+                  <button
+                    key={r.id}
+                    onClick={() => toggleRole(r.id)}
+                    className={`p-4 rounded-2xl border font-extrabold text-left transition flex items-center justify-between ${
+                      isSelected
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200'
+                        : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>{r.label}</span>
+                    <span className={`w-5 h-5 rounded-md flex items-center justify-center text-xs font-bold ${
+                      isSelected ? 'bg-white text-blue-600' : 'border border-slate-300 bg-white'
+                    }`}>
+                      {isSelected ? '✓' : ''}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="flex space-x-3 pt-4">
@@ -308,7 +340,7 @@ export default function App() {
                 ⬅️ 上一步
               </button>
               <button
-                onClick={() => setStep(3)}
+                onClick={handleNextStep2}
                 className="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-black py-3.5 rounded-2xl shadow-lg shadow-blue-200 transition"
               >
                 下一步 ➡️
@@ -328,8 +360,8 @@ export default function App() {
                   className="w-10 h-10 rounded-full border-2 border-blue-500" 
                 />
                 <div>
-                  <h2 className="text-lg font-extrabold text-slate-800">{name} ({role})</h2>
-                  <span className="text-xs text-slate-400">請點選你有空服侍的日期</span>
+                  <h2 className="text-lg font-extrabold text-slate-800">{name}</h2>
+                  <span className="text-xs text-blue-600 font-bold">{roles.join(', ')}</span>
                 </div>
               </div>
               <button 
@@ -404,7 +436,7 @@ export default function App() {
                   <div className="text-xs text-blue-600 font-bold">敬拜者資訊</div>
                   <div className="text-xl font-black text-slate-800">{name}</div>
                   <div className="text-xs font-semibold bg-blue-200 text-blue-800 px-2 py-0.5 rounded-md inline-block mt-1">
-                    {role}
+                    {roles.join(', ')}
                   </div>
                 </div>
               </div>
@@ -460,7 +492,7 @@ export default function App() {
             <div className="text-6xl animate-bounce">🎉</div>
             <h2 className="text-2xl font-black text-blue-600">提交成功！</h2>
             <p className="text-slate-600 font-medium text-sm">
-              多謝你 {name}（{role}）！已經幫你記低咗啦。
+              多謝你 {name}（{roles.join(', ')}）！已經幫你記低咗啦。
             </p>
 
             {/* 顯示所有已提交的可能服侍組合 */}
