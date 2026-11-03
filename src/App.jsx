@@ -11,13 +11,13 @@ export default function App() {
   // 10 個穩定且高質素的年青人頭像
  const youthAvatars = [
     'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=ev65u55b',
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=i0v1nrja',
+    'https://api.dicebear.com/10.x/fun-emoji/svg?seed=fe2t1u67',
     'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=on1evvov',
     'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=6hdm6mol',
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=ks6a0eok',
+    'https://api.dicebear.com/10.x/fun-emoji/svg?seed=6bmyevrt',
     'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=s8g8uswn',
     'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=hkw1645c',
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=po8zylmy',
+    'https://api.dicebear.com/10.x/fun-emoji/svg?seed=cshuztbl',
     'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=06og1tfq',
   ];
 
