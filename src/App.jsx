@@ -22,10 +22,10 @@ export default function App() {
   ];
 
   const [availability, setAvailability] = useState({
-    '10/11 主日': 'ok',
-    '17/11 主日': 'ok',
-    '24/11 主日': 'ok',
-    '01/12 主日': 'ok',
+    '10/11 敬拜': 'ok',
+    '17/11 敬拜': 'ok',
+    '24/11 敬拜': 'ok',
+    '01/12 敬拜': 'ok',
   });
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -56,7 +56,7 @@ export default function App() {
   // 儲存名字到 LocalStorage
   const handleNextStep = () => {
     if (!name.trim()) {
-      alert('請輸入或選擇你的名字');
+      alert('入你個名');
       return;
     }
     const trimmed = name.trim();
@@ -107,7 +107,7 @@ export default function App() {
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <span className="text-2xl">🎵</span>
-            <h1 className="text-xl font-bold tracking-wide text-blue-400">敬拜隊服侍意向表</h1>
+            <h1 className="text-xl font-bold tracking-wide text-blue-400">敬拜schedule</h1>
           </div>
           <div className="text-sm font-semibold text-slate-400">
             步驟 {step} / 4
@@ -128,7 +128,7 @@ export default function App() {
         {/* 步驟一：名字與頭像設定 */}
         {step === 1 && (
           <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl space-y-6">
-            <h2 className="text-2xl font-bold text-center text-blue-300">你是邊個位敬拜者？</h2>
+            <h2 className="text-2xl font-bold text-center text-blue-300">你係邊個？</h2>
             
             {/* 頭像預覽與隨機切換 */}
             <div className="flex flex-col items-center space-y-3">
@@ -143,18 +143,18 @@ export default function App() {
                 onClick={randomizeAvatar}
                 className="text-xs bg-slate-700 hover:bg-slate-600 text-blue-300 px-3 py-1.5 rounded-full border border-slate-600 transition"
               >
-                🎲 隨機切換造型
+                🎲 隨機轉你個樣
               </button>
             </div>
 
             {/* 輸入名字 */}
             <div className="space-y-2">
-              <label className="text-sm text-slate-300 font-medium">你的名字：</label>
+              <label className="text-sm text-slate-300 font-medium">你個名：</label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="例如：John / 頌恩"
+                placeholder="打喺度"
                 className="w-full bg-slate-900 border border-slate-600 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500"
               />
             </div>
@@ -162,7 +162,7 @@ export default function App() {
             {/* 快速選取曾記錄的名字 */}
             {savedNames.length > 0 && (
               <div className="space-y-2">
-                <span className="text-xs text-slate-400">快速選擇以前記錄的名字：</span>
+                <span className="text-xs text-slate-400">你之前用過嘅名</span>
                 <div className="flex flex-wrap gap-2">
                   {savedNames.map((saved, index) => (
                     <button
@@ -194,12 +194,12 @@ export default function App() {
         {step === 2 && (
           <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-bold text-blue-300">你好，{name}！請填寫服侍意向</h2>
+              <h2 className="text-xl font-bold text-blue-300">早晨，{name}！請揀</h2>
               <button 
                 onClick={() => setStep(1)} 
                 className="text-xs text-slate-400 hover:text-white underline"
               >
-                修改名字
+                修改名
               </button>
             </div>
 
@@ -228,7 +228,7 @@ export default function App() {
                             : 'bg-slate-800 text-slate-400 border border-slate-700'
                         }`}
                       >
-                        ❌ 不行
+                        ❌ 唔得閒
                       </button>
                     </div>
                   </div>
@@ -256,7 +256,7 @@ export default function App() {
         {/* 步驟三：確認資料 */}
         {step === 3 && (
           <div className="bg-slate-800 border border-slate-700 rounded-2xl p-8 shadow-xl space-y-6">
-            <h2 className="text-2xl font-bold text-center text-blue-300">確認你的資料！</h2>
+            <h2 className="text-2xl font-bold text-center text-blue-300">確認你填得啱</h2>
             
             <div className="bg-slate-900/80 border border-slate-700 p-6 rounded-xl space-y-4">
               <div className="flex items-center space-x-4">
@@ -270,12 +270,12 @@ export default function App() {
               </div>
 
               <div className="border-t border-slate-800 pt-3 space-y-2">
-                <div className="text-xs text-slate-400">服侍意向清單：</div>
+                <div className="text-xs text-slate-400">List: </div>
                 {Object.entries(availability).map(([date, status]) => (
                   <div key={date} className="flex justify-between text-sm">
                     <span className="text-slate-300">{date}</span>
                     <span className={status === 'ok' ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
-                      {status === 'ok' ? '✅ 可以服侍' : '❌ 無法服侍'}
+                      {status === 'ok' ? '✅ 嚟到' : '❌ 嚟唔到'}
                     </span>
                   </div>
                 ))}
@@ -307,7 +307,7 @@ export default function App() {
                     <span>上傳中...</span>
                   </>
                 ) : (
-                  <span>🚀 確認送出</span>
+                  <span>🚀 送出</span>
                 )}
               </button>
             </div>
@@ -320,7 +320,7 @@ export default function App() {
             <div className="text-6xl">🎉</div>
             <h2 className="text-2xl font-bold text-blue-300">提交成功！</h2>
             <p className="text-slate-300 text-sm">
-              多謝你 {name}！你的敬拜意向已經成功記錄到雲端資料庫。
+              多謝你 {name}！記得嚟啦。
             </p>
             <button
               onClick={() => {
