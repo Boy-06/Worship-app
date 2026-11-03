@@ -42,7 +42,7 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState('');
   const [allSubmissions, setAllSubmissions] = useState([]); // 所有已提交者的數據
 
-  // 1. 讀取本地儲存過的名字、頭像與崗位 & 載入所有資料庫紀錄
+  // 1. 讀取本地儲存數據 & Supabase
   useEffect(() => {
     try {
       const stored = localStorage.getItem('worship_saved_profiles');
@@ -55,7 +55,6 @@ export default function App() {
     fetchSubmissions();
   }, []);
 
-  // 2. 從 Supabase 讀取所有隊員資料
   const fetchSubmissions = async () => {
     try {
       const { data, error } = await supabase.from('users').select('*');
@@ -67,7 +66,6 @@ export default function App() {
     }
   };
 
-  // 3. 刪除資料庫紀錄
   const handleDeleteMember = async (id, memberName) => {
     if (!window.confirm(`確定要刪除「${memberName}」的登記紀錄嗎？`)) return;
 
@@ -80,13 +78,11 @@ export default function App() {
     }
   };
 
-  // 4. 隨機切換頭像
   const randomizeAvatar = () => {
     const randomIndex = Math.floor(Math.random() * youthAvatars.length);
     setSelectedAvatar(randomIndex);
   };
 
-  // 5. 點擊歷史紀錄帶入資料
   const handleSelectSavedProfile = (profile) => {
     setName(profile.name);
     if (profile.avatarIndex !== undefined) {
@@ -99,7 +95,6 @@ export default function App() {
     }
   };
 
-  // 6. 切換崗位選擇狀態 (複選邏輯)
   const toggleRole = (roleId) => {
     setRoles(prev => 
       prev.includes(roleId)
@@ -108,7 +103,6 @@ export default function App() {
     );
   };
 
-  // 7. 第一步完成：記錄名字、頭像與崗位到 LocalStorage
   const handleNextStep1 = () => {
     if (!name.trim()) {
       alert('入你個名');
@@ -142,7 +136,6 @@ export default function App() {
     }));
   };
 
-  // 8. 提交至 Supabase
   const handleSubmit = async () => {
     setLoading(true);
     setErrorMessage('');
@@ -167,56 +160,132 @@ export default function App() {
     }
   };
 
-  // 9. 渲染總更表 / 服侍陣容列表
+  // 💡 核心排班演算法：每星期每個 Role 只能有 1 人，多人重疊時隔週平均輪替
+  const calculateSmartSchedule = () => {
+    const dates = Object.keys(availability);
+    const schedule = {}; // { date: { role: assignedMember, backups: [members] } }
+
+    // 紀錄每個 Role 的歷史安排次數，保證平均分配
+    const roleAssignmentsCount = {};
+
+    dates.forEach((date, dateIndex) => {
+      schedule[date] = {};
+
+      rolesList.forEach(roleItem => {
+        const roleName = roleItem.id;
+        if (!roleAssignmentsCount[roleName]) roleAssignmentsCount[roleName] = {};
+
+        // 找出該星期、該崗位有空 (OK) 的所有人
+        const candidates = allSubmissions.filter(member => {
+          const isOk = member.availability && member.availability[date] === 'ok';
+          const hasRole = member.role && member.role.includes(roleName);
+          return isOk && hasRole;
+        });
+
+        if (candidates.length > 0) {
+          // 初始化候選人的服侍次數
+          candidates.forEach(c => {
+            if (roleAssignmentsCount[roleName][c.name] === undefined) {
+              roleAssignmentsCount[roleName][c.name] = 0;
+            }
+          });
+
+          // 排序：優先選擇「服侍次數最少」的人，若次數一樣，則按日期輪替
+          candidates.sort((a, b) => {
+            const countA = roleAssignmentsCount[roleName][a.name];
+            const countB = roleAssignmentsCount[roleName][b.name];
+            if (countA !== countB) return countA - countB;
+            return (candidates.indexOf(a) + dateIndex) % candidates.length;
+          });
+
+          // 選出當周正選 1 人
+          const assigned = candidates[0];
+          roleAssignmentsCount[roleName][assigned.name] += 1;
+
+          // 其餘為輪休/後備
+          const backups = candidates.slice(1);
+
+          schedule[date][roleName] = { assigned, backups };
+        } else {
+          schedule[date][roleName] = null; // 缺人
+        }
+      });
+    });
+
+    return schedule;
+  };
+
+  // 9. 渲染智能輪替更表
   const renderTeamCombinations = () => {
-    const dateKeys = Object.keys(availability);
+    const dates = Object.keys(availability);
+    const scheduleData = calculateSmartSchedule();
     
     return (
-      <div className="space-y-4 text-left mt-4 tracking-normal">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {dateKeys.map(date => {
-            const availableMembers = allSubmissions.filter(sub => {
-              return sub.availability && sub.availability[date] === 'ok';
-            });
-
-            return (
-              <div key={date} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-2xs">
-                <div className="font-bold text-blue-700 text-sm mb-3 flex items-center justify-between border-b pb-2">
-                  <span className="whitespace-nowrap">📅 {date}</span>
-                  <span className="text-xs font-bold bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                    {availableMembers.length} 人 OK
-                  </span>
-                </div>
-                {availableMembers.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {availableMembers.map((member) => (
-                      <div key={member.id || member.name} className="flex items-center space-x-1.5 bg-white border border-slate-200 rounded-full pl-2 pr-1.5 py-1 shadow-2xs">
-                        <img 
-                          src={youthAvatars[member.avatar_index] || youthAvatars[0]} 
-                          alt="avatar" 
-                          className="w-5 h-5 rounded-full object-contain shrink-0"
-                        />
-                        <span className="text-xs font-bold text-slate-800 whitespace-nowrap">{member.name}</span>
-                        <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-md font-semibold whitespace-nowrap">
-                          {member.role || 'Vocal'}
-                        </span>
-                        {/* 刪除按鈕 */}
-                        <button
-                          onClick={() => handleDeleteMember(member.id, member.name)}
-                          title="刪除此紀錄"
-                          className="w-4 h-4 text-[10px] bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-400 rounded-full flex items-center justify-center transition ml-1 shrink-0"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="text-xs text-slate-400 italic">暫時未有人選擇此時段</span>
-                )}
+      <div className="space-y-6 text-left mt-4 tracking-normal">
+        {dates.map(date => {
+          const dateRoles = scheduleData[date];
+          return (
+            <div key={date} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-2xs">
+              <div className="font-black text-blue-700 text-base mb-3 border-b pb-2 flex items-center justify-between">
+                <span>📅 {date} 陣容名單</span>
+                <span className="text-xs font-normal text-slate-500 bg-white px-2 py-0.5 rounded-md border">
+                  每崗位限 1 人輪替
+                </span>
               </div>
-            );
-          })}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {rolesList.map(r => {
+                  const item = dateRoles[r.id];
+                  return (
+                    <div key={r.id} className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between shadow-2xs">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs font-bold text-slate-500 min-w-[70px]">{r.label}:</span>
+                        {item && item.assigned ? (
+                          <div className="flex items-center space-x-1.5 bg-blue-50 border border-blue-200 rounded-full pl-1.5 pr-2 py-0.5">
+                            <img 
+                              src={youthAvatars[item.assigned.avatar_index] || youthAvatars[0]} 
+                              alt="avatar" 
+                              className="w-4 h-4 rounded-full shrink-0"
+                            />
+                            <span className="text-xs font-black text-blue-900">{item.assigned.name}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-rose-400 font-semibold italic">尚空缺</span>
+                        )}
+                      </div>
+
+                      {/* 顯示後備/輪休人員 */}
+                      {item && item.backups.length > 0 && (
+                        <div className="text-[10px] text-slate-400" title={`輪休中: ${item.backups.map(b => b.name).join(', ')}`}>
+                          (輪休: {item.backups.length}人)
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* 成員管理列表 (可刪除) */}
+        <div className="bg-slate-100/70 border border-slate-200 rounded-2xl p-4 mt-6">
+          <h4 className="text-xs font-bold text-slate-600 mb-2">已登記隊員總覽（點擊 ✕ 可刪除紀錄）：</h4>
+          <div className="flex flex-wrap gap-2">
+            {allSubmissions.map(member => (
+              <div key={member.id} className="flex items-center space-x-1 bg-white border border-slate-200 rounded-full px-2 py-1 shadow-2xs">
+                <img src={youthAvatars[member.avatar_index] || youthAvatars[0]} alt="avatar" className="w-4 h-4 rounded-full" />
+                <span className="text-xs font-bold text-slate-700">{member.name}</span>
+                <span className="text-[10px] text-slate-400">({member.role})</span>
+                <button
+                  onClick={() => handleDeleteMember(member.id, member.name)}
+                  className="w-3.5 h-3.5 text-[9px] bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-400 rounded-full flex items-center justify-center transition ml-1"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -224,7 +293,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen w-full bg-slate-50 text-slate-800 flex flex-col justify-between font-sans tracking-normal leading-normal text-left">
-      {/* 頂部 Header & 導覽標籤 */}
+      {/* 頂部 Header */}
       <header className="w-full bg-white border-b border-slate-200 px-4 sm:px-6 py-4 shadow-2xs sticky top-0 z-10">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div className="flex items-center space-x-1.5">
@@ -232,7 +301,6 @@ export default function App() {
             <h1 className="text-lg sm:text-xl font-extrabold text-blue-600 whitespace-nowrap">敬拜 Schedule</h1>
           </div>
           
-          {/* 導覽按鈕：切換填寫流程與總更表 */}
           <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200 shrink-0">
             <button
               onClick={() => setActiveTab('form')}
@@ -265,7 +333,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 填寫意向時才顯示進度條 */}
         {activeTab === 'form' && (
           <div className="max-w-3xl mx-auto mt-3 w-full bg-slate-200 h-2 rounded-full overflow-hidden">
             <div 
@@ -279,15 +346,13 @@ export default function App() {
       {/* 主要內容區 */}
       <main className="flex-1 max-w-2xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center">
         
-        {/* === 頁面一：填寫流程 (FORM TAB) === */}
+        {/* === 頁面一：填寫流程 === */}
         {activeTab === 'form' && (
           <>
-            {/* 步驟一：名字與頭像設定 */}
             {step === 1 && (
               <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <h2 className="text-2xl font-black text-center text-slate-800">你係邊個？</h2>
                 
-                {/* 頭像預覽與隨機切換 */}
                 <div className="flex flex-col items-center space-y-3">
                   <div className="w-28 h-28 rounded-full bg-blue-50 border-4 border-blue-500 overflow-hidden shadow-md p-1">
                     <img 
@@ -304,7 +369,6 @@ export default function App() {
                   </button>
                 </div>
 
-                {/* 輸入名字 */}
                 <div className="space-y-2">
                   <label className="text-sm text-slate-600 font-bold">你個名：</label>
                   <input
@@ -316,7 +380,6 @@ export default function App() {
                   />
                 </div>
 
-                {/* 快速選取曾記錄的名字、頭像與崗位 */}
                 {savedProfiles.length > 0 && (
                   <div className="space-y-2">
                     <span className="text-xs text-slate-500 font-bold">你之前用過嘅名（點擊帶入數據）：</span>
@@ -356,7 +419,6 @@ export default function App() {
               </div>
             )}
 
-            {/* 步驟二：選擇崗位 (Role) - 可複選 */}
             {step === 2 && (
               <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <div>
@@ -405,7 +467,6 @@ export default function App() {
               </div>
             )}
 
-            {/* 步驟三：選擇服侍意向 */}
             {step === 3 && (
               <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <div className="flex items-center justify-between border-b pb-4">
@@ -478,7 +539,6 @@ export default function App() {
               </div>
             )}
 
-            {/* 步驟四：確認資料 */}
             {step === 4 && (
               <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
                 <h2 className="text-2xl font-black text-center text-slate-800">確認你填得啱</h2>
@@ -542,7 +602,6 @@ export default function App() {
               </div>
             )}
 
-            {/* 步驟五：完成送出頁面 */}
             {step === 5 && (
               <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl text-center space-y-6">
                 <div className="text-6xl animate-bounce">🎉</div>
@@ -573,15 +632,15 @@ export default function App() {
           </>
         )}
 
-        {/* === 頁面二：查看總更表 (SCHEDULE TAB) === */}
+        {/* === 頁面二：查看總更表 === */}
         {activeTab === 'schedule' && (
           <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
             <div className="flex items-center justify-between border-b pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-                  <span>🤝</span> 敬拜服侍隊伍總覽
+                  <span>🤝</span> 智能服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">點擊成員頭像旁的 ✕ 可直接刪除該筆記錄</p>
+                <p className="text-xs text-slate-400 mt-1">每星期各崗位固定 1 人，多人重疊自動隔週輪替</p>
               </div>
               <button
                 onClick={fetchSubmissions}
