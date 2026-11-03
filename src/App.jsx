@@ -637,9 +637,9 @@ export default function App() {
             <div className="flex items-center justify-between border-b pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-                  <span>🤝</span> 智能服侍輪替更表
+                  <span>🤝</span> 總更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">每星期各崗位固定 1 人，多人重疊自動隔週輪替</p>
+                <p className="text-xs text-slate-400 mt-1">God Bless youuuu!!</p>
               </div>
               <button
                 onClick={fetchSubmissions}
