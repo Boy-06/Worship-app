@@ -7,7 +7,6 @@ export default function App() {
   const [savedNames, setSavedNames] = useState([]);
   const [selectedAvatar, setSelectedAvatar] = useState(0);
   
-// 精選 10 個清新自然風格的年青人頭像（風格 match 圖片）
   const youthAvatars = [
     'https://api.dicebear.com/7.x/personas/svg?seed=Liam&backgroundColor=b6e3f4',
     'https://api.dicebear.com/7.x/personas/svg?seed=Oliver&backgroundColor=ffd5dc',
