@@ -5,8 +5,8 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('form'); // 'form': 填寫流程, 'schedule': 查看總更表
   const [step, setStep] = useState(1); // 1: 名字/頭像, 2: 選擇崗位, 3: 選擇意向, 4: 確認送出, 5: 完成
   const [name, setName] = useState('');
-  const [savedProfiles, setSavedProfiles] = useState([]); // 儲存 { name, avatarIndex, roles }
-  const [selectedAvatar, setSelectedAvatar] = useState(0);
+  const [savedProfiles, setSavedProfiles] = useState([]); // 儲存 { name, avatarSeed, roles }
+  const [avatarSeed, setAvatarSeed] = useState('worship_default');
   const [roles, setRoles] = useState(['Vocal']); // 預設崗位（複選）
   const [selectedOptionIndex, setSelectedOptionIndex] = useState(0); // 目前選擇的組合方案 (0: 組合 1, 1: 組合 2...)
 
@@ -19,17 +19,22 @@ export default function App() {
     { id: 'Keys', label: '🎹 Keys' },
   ];
 
-  // 10 個穩定載入的頭像
-  const youthAvatars = [
-    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=8rl1w0dt',
-    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=fzodrib8',
-    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=4bptab2b',
-    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=1nhaaout',
-    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=5v0zkx6a',
-    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=16161a&tags=animation&seed=xjgx4xz1',
-    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=16161a&tags=animation&seed=tbdd7p3l',
-    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&seed=hp4n46ng',
-  ];
+  // 💡 將任意名字轉為穩定整數 Hash，對應資料庫 avatar_index 並保證絕不重複
+  const stringToHash = (str) => {
+    let hash = 0;
+    if (!str) return 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = (hash << 5) - hash + str.charCodeAt(i);
+      hash |= 0; 
+    }
+    return Math.abs(hash);
+  };
+
+  // 💡 以名字為基礎的 100% 獨一無二頭像生成器
+  const getAvatarUrl = (seedString) => {
+    const numericSeed = stringToHash(seedString);
+    return `https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=${numericSeed}`;
+  };
 
   const [availability, setAvailability] = useState({
     '10/11 敬拜': 'ok',
@@ -79,15 +84,21 @@ export default function App() {
   };
 
   const randomizeAvatar = () => {
-    const randomIndex = Math.floor(Math.random() * youthAvatars.length);
-    setSelectedAvatar(randomIndex);
+    const randomSeed = name.trim() ? `${name.trim()}_${Math.random().toString(36).substring(2, 7)}` : Math.random().toString(36).substring(2, 9);
+    setAvatarSeed(randomSeed);
+  };
+
+  const handleNameChange = (e) => {
+    const val = e.target.value;
+    setName(val);
+    if (val.trim()) {
+      setAvatarSeed(val.trim());
+    }
   };
 
   const handleSelectSavedProfile = (profile) => {
     setName(profile.name);
-    if (profile.avatarIndex !== undefined) {
-      setSelectedAvatar(profile.avatarIndex);
-    }
+    setAvatarSeed(profile.avatarSeed || profile.name);
     if (profile.roles && Array.isArray(profile.roles)) {
       setRoles(profile.roles);
     } else if (profile.role) {
@@ -110,7 +121,7 @@ export default function App() {
     }
     const trimmed = name.trim();
     let updatedProfiles = savedProfiles.filter(p => p.name !== trimmed);
-    updatedProfiles = [{ name: trimmed, avatarIndex: selectedAvatar, roles: roles }, ...updatedProfiles].slice(0, 5);
+    updatedProfiles = [{ name: trimmed, avatarSeed: avatarSeed, roles: roles }, ...updatedProfiles].slice(0, 5);
     
     setSavedProfiles(updatedProfiles);
     try {
@@ -140,10 +151,11 @@ export default function App() {
     setLoading(true);
     setErrorMessage('');
     try {
+      const numericAvatarIndex = stringToHash(avatarSeed);
       const { error } = await supabase.from('users').insert([
         {
           name: name.trim(),
-          avatar_index: selectedAvatar,
+          avatar_index: numericAvatarIndex,
           role: roles.join(', '),
           availability: availability
         }
@@ -268,6 +280,7 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {rolesList.map(r => {
                   const item = dateRoles[r.id];
+                  const memberAvatarUrl = item && item.assigned ? getAvatarUrl(item.assigned.name) : '';
                   return (
                     <div key={r.id} className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between shadow-2xs">
                       <div className="flex items-center space-x-2">
@@ -275,7 +288,7 @@ export default function App() {
                         {item && item.assigned ? (
                           <div className="flex items-center space-x-1.5 bg-blue-50 border border-blue-200 rounded-full pl-1.5 pr-2 py-0.5">
                             <img 
-                              src={youthAvatars[item.assigned.avatar_index] || youthAvatars[0]} 
+                              src={memberAvatarUrl} 
                               alt="avatar" 
                               className="w-4 h-4 rounded-full shrink-0"
                             />
@@ -305,7 +318,7 @@ export default function App() {
           <div className="flex flex-wrap gap-2">
             {allSubmissions.map(member => (
               <div key={member.id} className="flex items-center space-x-1 bg-white border border-slate-200 rounded-full px-2 py-1 shadow-2xs">
-                <img src={youthAvatars[member.avatar_index] || youthAvatars[0]} alt="avatar" className="w-4 h-4 rounded-full" />
+                <img src={getAvatarUrl(member.name)} alt="avatar" className="w-4 h-4 rounded-full" />
                 <span className="text-xs font-bold text-slate-700">{member.name}</span>
                 <span className="text-[10px] text-slate-400">({member.role})</span>
                 <button
@@ -387,7 +400,7 @@ export default function App() {
                 <div className="flex flex-col items-center space-y-3">
                   <div className="w-28 h-28 rounded-full bg-blue-50 border-4 border-blue-500 overflow-hidden shadow-md p-1">
                     <img 
-                      src={youthAvatars[selectedAvatar]} 
+                      src={getAvatarUrl(avatarSeed)} 
                       alt="Avatar" 
                       className="w-full h-full object-contain rounded-full bg-white"
                     />
@@ -396,7 +409,7 @@ export default function App() {
                     onClick={randomizeAvatar}
                     className="text-xs bg-slate-100 hover:bg-slate-200 text-blue-600 font-bold px-4 py-2 rounded-full border border-blue-200 transition shadow-2xs"
                   >
-                    🎲 隨機轉你個樣
+                    🎲 隨機換個獨特造型
                   </button>
                 </div>
 
@@ -405,7 +418,7 @@ export default function App() {
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={handleNameChange}
                     placeholder="打喺度"
                     className="w-full bg-slate-50 border border-slate-300 focus:bg-white rounded-2xl px-4 py-3.5 text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                   />
@@ -428,7 +441,7 @@ export default function App() {
                             }`}
                           >
                             <img 
-                              src={youthAvatars[profile.avatarIndex] || youthAvatars[0]} 
+                              src={getAvatarUrl(profile.avatarSeed || profile.name)} 
                               alt="icon" 
                               className="w-4 h-4 rounded-full"
                             />
@@ -503,7 +516,7 @@ export default function App() {
                 <div className="flex items-center justify-between border-b pb-4">
                   <div className="flex items-center space-x-3">
                     <img 
-                      src={youthAvatars[selectedAvatar]} 
+                      src={getAvatarUrl(avatarSeed)} 
                       alt="Avatar" 
                       className="w-10 h-10 rounded-full border-2 border-blue-500 shrink-0" 
                     />
@@ -577,7 +590,7 @@ export default function App() {
                 <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-2xl space-y-4">
                   <div className="flex items-center space-x-4">
                     <div className="w-16 h-16 rounded-full bg-white p-1 border-2 border-blue-500 shadow-sm overflow-hidden shrink-0">
-                      <img src={youthAvatars[selectedAvatar]} alt="Avatar" className="w-full h-full object-contain bg-white rounded-full" />
+                      <img src={getAvatarUrl(avatarSeed)} alt="Avatar" className="w-full h-full object-contain bg-white rounded-full" />
                     </div>
                     <div>
                       <div className="text-xs text-blue-600 font-bold">敬拜者資訊</div>
