@@ -21,15 +21,14 @@ export default function App() {
 
   // 10 個穩定載入的頭像
   const youthAvatars = [
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=ev65u55b',
-    'https://api.dicebear.com/10.x/fun-emoji/svg?seed=fe2t1u67',
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=on1evvov',
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=6hdm6mol',
-    'https://api.dicebear.com/10.x/fun-emoji/svg?seed=6bmyevrt',
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=s8g8uswn',
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=hkw1645c',
-    'https://api.dicebear.com/10.x/fun-emoji/svg?seed=cshuztbl',
-    'https://api.dicebear.com/10.x/thumbs/svg?tags=animation&seed=06og1tfq',
+    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=8rl1w0dt',
+    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=fzodrib8',
+    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=4bptab2b',
+    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=1nhaaout',
+    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=5v0zkx6a',
+    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=16161a&tags=animation&seed=xjgx4xz1',
+    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=16161a&tags=animation&seed=tbdd7p3l',
+    'https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&seed=hp4n46ng',
   ];
 
   const [availability, setAvailability] = useState({
