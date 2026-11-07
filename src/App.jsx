@@ -165,7 +165,7 @@ export default function App() {
     setErrorMessage('');
     try {
       const numericAvatarIndex = stringToHash(avatarSeed);
-      const { error } = await supabase.from('users').insert([
+      const { error } = await supabase.from('users'].insert([
         {
           name: name.trim(),
           avatar_index: numericAvatarIndex,
@@ -185,7 +185,7 @@ export default function App() {
     }
   };
 
-  // 💡 智慧動態輪替方案（加入：同一天內一人不重複擔任多職、確保所有 OK 成員有機會輪流派遣）
+  // 💡 智慧動態輪替方案（支援：優先不重複分配；若人手不足時，允許非 Drum/Bass 崗位兼任）
   const calculateDayCombinations = (date) => {
     let maxCandidates = 1;
 
@@ -205,27 +205,46 @@ export default function App() {
 
     for (let offset = 0; offset < optionsCount; offset++) {
       const currentLineup = {};
-      const assignedMemberIds = new Set(); // 嚴格確保同一天內一人不重複擔任多職
+      const assignedMemberIds = new Set(); // 記錄當天已被指派的成員 ID
 
       rolesList.forEach(r => {
         const roleId = r.id;
 
+        // 1. 找出所有這天 OK 且擁有該 role 的人
         const candidates = allSubmissions.filter(sub => {
           const isOk = sub.availability && sub.availability[date] === 'ok';
           const hasRole = sub.role && sub.role.includes(roleId);
-          return isOk && hasRole && !assignedMemberIds.has(sub.id);
+          return isOk && hasRole;
         });
 
         if (candidates.length > 0) {
-          candidates.sort((a, b) => {
-            const idxA = candidates.indexOf(a);
-            const idxB = candidates.indexOf(b);
-            return ((idxA + offset) % candidates.length) - ((idxB + offset) % candidates.length);
-          });
+          // 優先挑選「尚未被指派」的人
+          let unassignedCandidates = candidates.filter(sub => !assignedMemberIds.has(sub.id));
+          let selected = null;
 
-          const selected = candidates[0];
-          currentLineup[roleId] = selected;
-          assignedMemberIds.add(selected.id); // 標記該成員當天已獲派職位，不能再擔任其他崗位
+          if (unassignedCandidates.length > 0) {
+            unassignedCandidates.sort((a, b) => {
+              const idxA = candidates.indexOf(a);
+              const idxB = candidates.indexOf(b);
+              return ((idxA + offset) % unassignedCandidates.length) - ((idxB + offset) % unassignedCandidates.length);
+            });
+            selected = unassignedCandidates[0];
+          } else if (roleId !== 'Drum' && roleId !== 'Bass') {
+            // 如果沒有未被指派的人，且該崗位不是 Drum 或 Bass，允許兼任（「如果那天沒有其他人」）
+            candidates.sort((a, b) => {
+              const idxA = candidates.indexOf(a);
+              const idxB = candidates.indexOf(b);
+              return ((idxA + offset) % candidates.length) - ((idxB + offset) % candidates.length);
+            });
+            selected = candidates[0];
+          }
+
+          if (selected) {
+            currentLineup[roleId] = selected;
+            assignedMemberIds.add(selected.id);
+          } else {
+            currentLineup[roleId] = null;
+          }
         } else {
           currentLineup[roleId] = null;
         }
@@ -610,7 +629,7 @@ export default function App() {
                       <div key={date} className="flex justify-between text-sm py-1 border-b border-slate-100 last:border-0">
                         <span className="text-slate-600 font-medium">{date}</span>
                         <span className={status === 'ok' ? 'text-emerald-600 font-bold' : 'text-rose-500 font-bold'}>
-                          {status === 'ok' ? '✅ 嚟到' : '❌ 嚟唔到'}
+                          {status === 'ok' ? '✅ 嚟到' : '❌ 嚟唔得閒'}
                         </span>
                       </div>
                     ))}
@@ -687,7 +706,7 @@ export default function App() {
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
                   <span>🤝</span> 智慧服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">已完美實現「一人不重複擔任多職」互斥邏輯，確保排班準確流暢</p>
+                <p className="text-xs text-slate-400 mt-1">人手不足時自動允許兼任（Drum/Bass 獨立不兼任），確保各崗位順暢運作</p>
               </div>
               <button
                 onClick={fetchSubmissions}
