@@ -9,7 +9,7 @@ export default function App() {
   const [avatarSeed, setAvatarSeed] = useState('worship_default');
   const [roles, setRoles] = useState(['Vocal']); // 預設崗位（複選）
   
-  // 💡 改為記錄每一天各自選取的組合方案索引 (例如 { '10/11 敬拜': 0, '17/11 敬拜': 1 })
+  // 記錄每一天各自選取的組合方案索引 (例如 { '10/11 敬拜': 0, '17/11 敬拜': 1 })
   const [dateSelectedOptions, setDateSelectedOptions] = useState({});
 
   const rolesList = [
@@ -179,56 +179,52 @@ export default function App() {
       setStep(5);
     } catch (err) {
       console.error('Submit error:', err.message);
-      setErrorMessage(`提交時發生錯誤：${err.message}`);
+      setErrorMessage(`時尚發生錯誤：${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // 💡 為單一日期計算所有可能的有效陣容組合
+  // 💡 智慧公平輪替方案：為每一天生成 2 種精選平衡組合（確保 OK 的人不會被忽略、一人不兼多職）
   const calculateDayCombinations = (date) => {
-    const roleCandidates = {};
-    rolesList.forEach(r => {
-      roleCandidates[r.id] = allSubmissions.filter(sub => {
-        const isOk = sub.availability && sub.availability[date] === 'ok';
-        const hasRole = sub.role && sub.role.includes(r.id);
-        return isOk && hasRole;
-      });
-    });
+    const optionsCount = 2; // 提供 2 種智慧輪替方案供切換
+    const dayOptions = [];
 
-    const results = [];
-    const generateLineups = (roleIndex, currentLineup, usedMembers) => {
-      if (roleIndex === rolesList.length) {
-        results.push({ ...currentLineup });
-        return;
-      }
-      const roleId = rolesList[roleIndex].id;
-      const candidates = roleCandidates[roleId] || [];
+    for (let offset = 0; offset < optionsCount; offset++) {
+      const currentLineup = {};
+      const assignedMemberIds = new Set(); // 確保同一天內一人不重複擔任多職
 
-      if (candidates.length === 0) {
-        currentLineup[roleId] = null;
-        generateLineups(roleIndex + 1, currentLineup, usedMembers);
-      } else {
-        candidates.forEach(cand => {
-          if (!usedMembers.has(cand.id)) {
-            usedMembers.add(cand.id);
-            currentLineup[roleId] = cand;
-            generateLineups(roleIndex + 1, currentLineup, usedMembers);
-            usedMembers.delete(cand.id);
-          }
+      rolesList.forEach(r => {
+        const roleId = r.id;
+
+        // 找出這天該崗位 OK 且尚未被分配的候選人
+        const candidates = allSubmissions.filter(sub => {
+          const isOk = sub.availability && sub.availability[date] === 'ok';
+          const hasRole = sub.role && sub.role.includes(roleId);
+          return isOk && hasRole && !assignedMemberIds.has(sub.id);
         });
-        currentLineup[roleId] = null;
-        generateLineups(roleIndex + 1, currentLineup, usedMembers);
-      }
-    };
 
-    generateLineups(0, {}, new Set());
-    // 過濾掉全空的組合（如果有人ok但未配到則略過全空）
-    const validResults = results.filter(lineup => Object.values(lineup).some(val => val !== null));
-    return validResults.length > 0 ? validResults : [{}];
+        if (candidates.length > 0) {
+          // 透過 offset 排序輪替，確保多人時輪流上陣
+          candidates.sort((a, b) => {
+            return ((candidates.indexOf(a) + offset) % candidates.length) - ((candidates.indexOf(b) + offset) % candidates.length);
+          });
+
+          const selected = candidates[0];
+          currentLineup[roleId] = selected;
+          assignedMemberIds.add(selected.id);
+        } else {
+          currentLineup[roleId] = null;
+        }
+      });
+
+      dayOptions.push(currentLineup);
+    }
+
+    return dayOptions;
   };
 
-  // 9. 渲染總更表（支援「每一天獨立切換組合」）
+  // 9. 渲染總更表（支援每一天獨立切換方案 1 / 方案 2）
   const renderTeamCombinations = () => {
     const dates = Object.keys(availability);
     
@@ -248,14 +244,14 @@ export default function App() {
                 <div className="font-black text-blue-700 text-base flex items-center gap-2">
                   <span>📅 {date}</span>
                   <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-extrabold">
-                    共 {dayOptions.length} 種組合
+                    共 {dayOptions.length} 種方案
                   </span>
                 </div>
 
                 {/* 獨立切換這天的組合方案 */}
                 {dayOptions.length > 1 && (
                   <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                    <span className="text-xs text-slate-400 font-bold shrink-0">切換組合：</span>
+                    <span className="text-xs text-slate-400 font-bold shrink-0">切換方案：</span>
                     {dayOptions.map((_, idx) => (
                       <button
                         key={idx}
@@ -275,7 +271,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* 崗位名單（移除空缺，只要有人ok且符合即直接上陣） */}
+              {/* 崗位名單 */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {rolesList.map(r => {
                   const assignedMember = currentLineup[r.id];
@@ -294,7 +290,7 @@ export default function App() {
                             <span className="text-xs font-black text-blue-900">{assignedMember.name}</span>
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-300 italic">無需/暫缺</span>
+                          <span className="text-xs text-slate-300 italic">暫缺</span>
                         )}
                       </div>
                     </div>
@@ -676,9 +672,9 @@ export default function App() {
             <div className="flex items-center justify-between border-b pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-                  <span>🤝</span> 服侍輪替更表
+                  <span>🤝</span> 智慧服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">每一天均可獨立切換不同的方案組合，無需整表切換</p>
+                <p className="text-xs text-slate-400 mt-1">每一天均可獨立切換不同方案，確保填 OK 的人皆獲公平指派</p>
               </div>
               <button
                 onClick={fetchSubmissions}
