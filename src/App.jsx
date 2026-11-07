@@ -9,7 +9,7 @@ export default function App() {
   const [avatarSeed, setAvatarSeed] = useState('worship_default');
   const [roles, setRoles] = useState(['Vocal']); // 預設崗位（複選）
   
-  // 記錄每一天各自選取的組合方案索引 (例如 { '10/11 敬拜': 0, '17/11 敬拜': 1 })
+  // 記錄每一天各自選取的組合方案索引
   const [dateSelectedOptions, setDateSelectedOptions] = useState({});
 
   const rolesList = [
@@ -49,11 +49,11 @@ export default function App() {
     return `https://api.dicebear.com/10.x/gaze/svg?backgroundColor=ffffff&bodyColor=${palette}&tags=animation&seed=${numericSeed}`;
   };
 
+  // 💡 已將預設日期修改為 14/11, 21/11, 28/11
   const [availability, setAvailability] = useState({
-    '10/11 敬拜': 'ok',
-    '17/11 敬拜': 'ok',
-    '24/11 敬拜': 'ok',
-    '01/12 敬拜': 'ok',
+    '14/11 敬拜': 'ok',
+    '21/11 敬拜': 'ok',
+    '28/11 敬拜': 'ok',
   });
 
   const [loading, setLoading] = useState(false);
@@ -207,7 +207,7 @@ export default function App() {
     return false;
   };
 
-  // 💡 智慧動態輪替方案（支援：優先不重複；人手不足時允許合理兼任，但嚴格遵守 Drum/Bass 獨立及 Guitarist/Keys 互斥）
+  // 💡 智慧動態輪替方案
   const calculateDayCombinations = (date) => {
     let maxCandidates = 1;
 
@@ -231,7 +231,6 @@ export default function App() {
       rolesList.forEach(r => {
         const roleId = r.id;
 
-        // 1. 找出所有這天 OK 且擁有該 role 的人
         const candidates = allSubmissions.filter(sub => {
           const isOk = sub.availability && sub.availability[date] === 'ok';
           const hasRole = sub.role && sub.role.includes(roleId);
@@ -239,10 +238,8 @@ export default function App() {
         });
 
         if (candidates.length > 0) {
-          // 過濾掉與現有分配有衝突（如 Drum/Bass 兼任、Guitarist 與 Keys 同時擔當）的候選人
           const validCandidates = candidates.filter(sub => !hasRoleConflict(sub.id, roleId, currentLineup));
 
-          // 優先挑選「尚未被指派任何崗位」的人
           let unassignedCandidates = validCandidates.filter(sub => {
             return !Object.values(currentLineup).some(m => m && m.id === sub.id);
           });
@@ -257,7 +254,6 @@ export default function App() {
             });
             selected = unassignedCandidates[0];
           } else if (roleId !== 'Drum' && roleId !== 'Bass') {
-            // 如果沒有未被指派的人，且符合兼任條件（且無互斥衝突）
             validCandidates.sort((a, b) => {
               const idxA = candidates.indexOf(a);
               const idxB = candidates.indexOf(b);
@@ -282,7 +278,7 @@ export default function App() {
     return dayOptions;
   };
 
-  // 9. 渲染總更表（支援每一天獨立切換方案）
+  // 9. 渲染總更表
   const renderTeamCombinations = () => {
     const dates = Object.keys(availability);
     
@@ -732,7 +728,7 @@ export default function App() {
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
                   <span>🤝</span> 智慧服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">已加入 Guitarist 與 Keys 互斥邏輯，確保同一人不兼任這兩個樂器</p>
+                <p className="text-xs text-slate-400 mt-1">日期已更新為 14/11, 21/11, 28/11</p>
               </div>
               <button
                 onClick={fetchSubmissions}
