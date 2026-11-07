@@ -179,15 +179,29 @@ export default function App() {
       setStep(5);
     } catch (err) {
       console.error('Submit error:', err.message);
-      setErrorMessage(`時尚發生錯誤：${err.message}`);
+      setErrorMessage(`提交時發生錯誤：${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // 💡 智慧公平輪替方案：為每一天生成 2 種精選平衡組合（確保 OK 的人不會被忽略、一人不兼多職）
+  // 💡 動態智慧輪替方案：根據當天該崗位最多有幾位候選人，自動決定生成幾種方案，確保所有人都有機會被派遣
   const calculateDayCombinations = (date) => {
-    const optionsCount = 2; // 提供 2 種智慧輪替方案供切換
+    let maxCandidates = 1;
+
+    // 計算當天各崗位最多的候選人數
+    rolesList.forEach(r => {
+      const candidates = allSubmissions.filter(sub => {
+        const isOk = sub.availability && sub.availability[date] === 'ok';
+        const hasRole = sub.role && sub.role.includes(r.id);
+        return isOk && hasRole;
+      });
+      if (candidates.length > maxCandidates) {
+        maxCandidates = candidates.length;
+      }
+    });
+
+    const optionsCount = Math.min(Math.max(1, maxCandidates), 5); // 動態決定方案數量（最多 5 種）
     const dayOptions = [];
 
     for (let offset = 0; offset < optionsCount; offset++) {
@@ -197,7 +211,6 @@ export default function App() {
       rolesList.forEach(r => {
         const roleId = r.id;
 
-        // 找出這天該崗位 OK 且尚未被分配的候選人
         const candidates = allSubmissions.filter(sub => {
           const isOk = sub.availability && sub.availability[date] === 'ok';
           const hasRole = sub.role && sub.role.includes(roleId);
@@ -205,9 +218,10 @@ export default function App() {
         });
 
         if (candidates.length > 0) {
-          // 透過 offset 排序輪替，確保多人時輪流上陣
           candidates.sort((a, b) => {
-            return ((candidates.indexOf(a) + offset) % candidates.length) - ((candidates.indexOf(b) + offset) % candidates.length);
+            const idxA = candidates.indexOf(a);
+            const idxB = candidates.indexOf(b);
+            return ((idxA + offset) % candidates.length) - ((idxB + offset) % candidates.length);
           });
 
           const selected = candidates[0];
@@ -224,7 +238,7 @@ export default function App() {
     return dayOptions;
   };
 
-  // 9. 渲染總更表（支援每一天獨立切換方案 1 / 方案 2）
+  // 9. 渲染總更表（支援每一天獨立切換方案）
   const renderTeamCombinations = () => {
     const dates = Object.keys(availability);
     
@@ -239,7 +253,7 @@ export default function App() {
           return (
             <div key={date} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
               
-              {/* 日期標題與該天專屬的組合切換按鈕 */}
+              {/* 日期標題與該天專屬的動態方案切換按鈕 */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b pb-3 gap-2">
                 <div className="font-black text-blue-700 text-base flex items-center gap-2">
                   <span>📅 {date}</span>
@@ -674,7 +688,7 @@ export default function App() {
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
                   <span>🤝</span> 智慧服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">每一天均可獨立切換不同方案，確保填 OK 的人皆獲公平指派</p>
+                <p className="text-xs text-slate-400 mt-1">動態方案數已修復：確保每一位填 OK 的成員都能公平參與輪流派遣</p>
               </div>
               <button
                 onClick={fetchSubmissions}
