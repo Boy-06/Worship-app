@@ -19,7 +19,7 @@ export default function App() {
     { id: 'Keys', label: '🎹 Keys' },
   ];
 
-  // 💡 將任意名字轉為穩定整數 Hash，對應資料庫 avatar_index 並保證絕不重複
+  // 將任意名字轉為穩定整數 Hash
   const stringToHash = (str) => {
     let hash = 0;
     if (!str) return 0;
@@ -30,10 +30,28 @@ export default function App() {
     return Math.abs(hash);
   };
 
-  // 💡 以名字為基礎的 100% 獨一無二頭像生成器
+  // 💡 智能動態生成不同顏色與造型的頭像函數
   const getAvatarUrl = (seedString) => {
     const numericSeed = stringToHash(seedString);
-    return `https://api.dicebear.com/10.x/gaze/svg?backgroundColor=0f0f12&bodyColor=ff2e88,00e5ff,7cff00,ffe600,ff6a00,b400ff&tags=animation&seed=${numericSeed}`;
+    
+    // 多種鮮明、高質感的背景顏色清單
+    const bgColors = ['1e293b', '3b82f6', '10b981', 'f59e0b', 'ef4444', '8b5cf6', 'ec4899', '06b6d4', 'f97316', '6366f1'];
+    // 多種不同的炫彩身體配色方案
+    const palettes = [
+      'ff2e88,00e5ff,7cff00',
+      'ffe600,ff6a00,b400ff',
+      '00ffff,ff00ff,ffff00',
+      '34d399,60a5fa,f43f5e',
+      'fbbf24,38bdf8,a855f7',
+      'ec4899,8b5cf6,3b82f6',
+      'ff6b6b,feca57,48dbfb'
+    ];
+
+    // 根據名字自動對應不同的背景與配色
+    const bg = bgColors[numericSeed % bgColors.length];
+    const palette = palettes[Math.floor(numericSeed / bgColors.length) % palettes.length];
+
+    return `https://api.dicebear.com/10.x/gaze/svg?backgroundColor=${bg}&bodyColor=${palette}&tags=animation&seed=${numericSeed}`;
   };
 
   const [availability, setAvailability] = useState({
@@ -172,15 +190,11 @@ export default function App() {
     }
   };
 
-  // 💡 多重組合演算法：計算出所有可能的組合版本（例如 組合 1、組合 2...）
+  // 💡 多重組合演算法：計算出所有可能的組合版本
   const calculateAllCombinations = () => {
     const dates = Object.keys(availability);
-    
-    // 生成兩種不同的輪替方案（組合1：預設最佳輪替；組合2：反向/交替輪替）
     const combinations = [];
 
-    // 組合 1: 順序輪替 (正向)
-    // 組合 2: 逆序輪替 (反向，讓輪休的人當正選)
     [0, 1].forEach((offset) => {
       const scheduleOption = {};
       const roleAssignmentsCount = {};
@@ -205,7 +219,6 @@ export default function App() {
               }
             });
 
-            // 根據 offset 調整排列順序，形成不同的組合方案
             const sortedCandidates = [...candidates].sort((a, b) => {
               const countA = roleAssignmentsCount[roleName][a.name];
               const countB = roleAssignmentsCount[roleName][b.name];
