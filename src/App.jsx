@@ -30,12 +30,10 @@ export default function App() {
     return Math.abs(hash);
   };
 
-  // 💡 智能動態生成不同顏色與造型的頭像函數
+  // 💡 背景固定為白色 (ffffff)，但角色本身的色彩和造型會根據名字自動變幻、絕不重複
   const getAvatarUrl = (seedString) => {
     const numericSeed = stringToHash(seedString);
     
-    // 多種鮮明、高質感的背景顏色清單
-    const bgColors = ['1e293b', '3b82f6', '10b981', 'f59e0b', 'ef4444', '8b5cf6', 'ec4899', '06b6d4', 'f97316', '6366f1'];
     // 多種不同的炫彩身體配色方案
     const palettes = [
       'ff2e88,00e5ff,7cff00',
@@ -44,14 +42,13 @@ export default function App() {
       '34d399,60a5fa,f43f5e',
       'fbbf24,38bdf8,a855f7',
       'ec4899,8b5cf6,3b82f6',
-      'ff6b6b,feca57,48dbfb'
+      'ff6b6b,feca57,48dbfb',
+      '3b82f6,10b981,f59e0b'
     ];
 
-    // 根據名字自動對應不同的背景與配色
-    const bg = bgColors[numericSeed % bgColors.length];
-    const palette = palettes[Math.floor(numericSeed / bgColors.length) % palettes.length];
+    const palette = palettes[numericSeed % palettes.length];
 
-    return `https://api.dicebear.com/10.x/gaze/svg?backgroundColor=${bg}&bodyColor=${palette}&tags=animation&seed=${numericSeed}`;
+    return `https://api.dicebear.com/10.x/gaze/svg?backgroundColor=ffffff&bodyColor=${palette}&tags=animation&seed=${numericSeed}`;
   };
 
   const [availability, setAvailability] = useState({
@@ -303,7 +300,7 @@ export default function App() {
                             <img 
                               src={memberAvatarUrl} 
                               alt="avatar" 
-                              className="w-4 h-4 rounded-full shrink-0"
+                              className="w-4 h-4 rounded-full shrink-0 bg-white"
                             />
                             <span className="text-xs font-black text-blue-900">{item.assigned.name}</span>
                           </div>
@@ -331,7 +328,7 @@ export default function App() {
           <div className="flex flex-wrap gap-2">
             {allSubmissions.map(member => (
               <div key={member.id} className="flex items-center space-x-1 bg-white border border-slate-200 rounded-full px-2 py-1 shadow-2xs">
-                <img src={getAvatarUrl(member.name)} alt="avatar" className="w-4 h-4 rounded-full" />
+                <img src={getAvatarUrl(member.name)} alt="avatar" className="w-4 h-4 rounded-full bg-white" />
                 <span className="text-xs font-bold text-slate-700">{member.name}</span>
                 <span className="text-[10px] text-slate-400">({member.role})</span>
                 <button
@@ -411,7 +408,7 @@ export default function App() {
                 <h2 className="text-2xl font-black text-center text-slate-800">你係邊個？</h2>
                 
                 <div className="flex flex-col items-center space-y-3">
-                  <div className="w-28 h-28 rounded-full bg-blue-50 border-4 border-blue-500 overflow-hidden shadow-md p-1">
+                  <div className="w-28 h-28 rounded-full bg-slate-50 border-4 border-blue-500 overflow-hidden shadow-md p-1">
                     <img 
                       src={getAvatarUrl(avatarSeed)} 
                       alt="Avatar" 
@@ -456,7 +453,7 @@ export default function App() {
                             <img 
                               src={getAvatarUrl(profile.avatarSeed || profile.name)} 
                               alt="icon" 
-                              className="w-4 h-4 rounded-full"
+                              className="w-4 h-4 rounded-full bg-white"
                             />
                             <span>{profile.name}</span>
                             {displayRoles && <span className="opacity-75">({displayRoles})</span>}
@@ -531,7 +528,7 @@ export default function App() {
                     <img 
                       src={getAvatarUrl(avatarSeed)} 
                       alt="Avatar" 
-                      className="w-10 h-10 rounded-full border-2 border-blue-500 shrink-0" 
+                      className="w-10 h-10 rounded-full border-2 border-blue-500 shrink-0 bg-white" 
                     />
                     <div>
                       <h2 className="text-lg font-extrabold text-slate-800">{name}</h2>
