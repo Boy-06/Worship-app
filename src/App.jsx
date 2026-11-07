@@ -8,7 +8,7 @@ export default function App() {
   const [savedProfiles, setSavedProfiles] = useState([]); // 儲存 { name, avatarSeed, roles }
   const [avatarSeed, setAvatarSeed] = useState('worship_default');
   const [roles, setRoles] = useState(['Vocal']); // 預設崗位（複選）
-  const [selectedOptionIndex, setSelectedOptionIndex] = useState(0); // 目前選擇的組合方案 (0: 組合 1, 1: 組合 2...)
+  const [selectedOptionIndex, setSelectedOptionIndex] = useState(0); // 目前選擇的組合方案索引
 
   const rolesList = [
     { id: 'Worship Leader', label: '👑 Worship Leader' },
@@ -30,11 +30,9 @@ export default function App() {
     return Math.abs(hash);
   };
 
-  // 💡 背景固定為白色 (ffffff)，但角色本身的色彩和造型會根據名字自動變幻、絕不重複
+  // 背景固定為白色 (ffffff)，角色色彩根據名字自動變幻、絕不重複
   const getAvatarUrl = (seedString) => {
     const numericSeed = stringToHash(seedString);
-    
-    // 多種不同的炫彩身體配色方案
     const palettes = [
       'ff2e88,00e5ff,7cff00',
       'ffe600,ff6a00,b400ff',
@@ -45,9 +43,7 @@ export default function App() {
       'ff6b6b,feca57,48dbfb',
       '3b82f6,10b981,f59e0b'
     ];
-
     const palette = palettes[numericSeed % palettes.length];
-
     return `https://api.dicebear.com/10.x/gaze/svg?backgroundColor=ffffff&bodyColor=${palette}&tags=animation&seed=${numericSeed}`;
   };
 
@@ -187,89 +183,104 @@ export default function App() {
     }
   };
 
-  // 💡 多重組合演算法：計算出所有可能的組合版本
+  // 💡 根據真實登記資料，動態計算所有可能的服侍組合方案
   const calculateAllCombinations = () => {
     const dates = Object.keys(availability);
-    const combinations = [];
+    let scheduleOptions = [{}];
 
-    [0, 1].forEach((offset) => {
-      const scheduleOption = {};
-      const roleAssignmentsCount = {};
-
-      dates.forEach((date, dateIndex) => {
-        scheduleOption[date] = {};
-
-        rolesList.forEach(roleItem => {
-          const roleName = roleItem.id;
-          if (!roleAssignmentsCount[roleName]) roleAssignmentsCount[roleName] = {};
-
-          const candidates = allSubmissions.filter(member => {
-            const isOk = member.availability && member.availability[date] === 'ok';
-            const hasRole = member.role && member.role.includes(roleName);
-            return isOk && hasRole;
-          });
-
-          if (candidates.length > 0) {
-            candidates.forEach(c => {
-              if (roleAssignmentsCount[roleName][c.name] === undefined) {
-                roleAssignmentsCount[roleName][c.name] = 0;
-              }
-            });
-
-            const sortedCandidates = [...candidates].sort((a, b) => {
-              const countA = roleAssignmentsCount[roleName][a.name];
-              const countB = roleAssignmentsCount[roleName][b.name];
-              if (countA !== countB) return countA - countB;
-              return ((candidates.indexOf(a) + dateIndex + offset) % candidates.length) - ((candidates.indexOf(b) + dateIndex + offset) % candidates.length);
-            });
-
-            const assigned = sortedCandidates[0];
-            roleAssignmentsCount[roleName][assigned.name] += 1;
-            const backups = sortedCandidates.slice(1);
-
-            scheduleOption[date][roleName] = { assigned, backups };
-          } else {
-            scheduleOption[date][roleName] = null;
-          }
+    dates.forEach(date => {
+      // 1. 找出這天每個 Role 有哪些人選 (ok 且擁有該 role)
+      const roleCandidates = {};
+      rolesList.forEach(r => {
+        roleCandidates[r.id] = allSubmissions.filter(sub => {
+          const isOk = sub.availability && sub.availability[date] === 'ok';
+          const hasRole = sub.role && sub.role.includes(r.id);
+          return isOk && hasRole;
         });
       });
 
-      combinations.push(scheduleOption);
+      // 2. 為這一天的每個 Role 生成可能的有效陣容（每人每場不重複擔任多職）
+      const generateDayLineups = (roleIndex, currentLineup, usedMembers, results) => {
+        if (roleIndex === rolesList.length) {
+          results.push({ ...currentLineup });
+          return;
+        }
+        const roleId = rolesList[roleIndex].id;
+        const candidates = roleCandidates[roleId] || [];
+
+        if (candidates.length === 0) {
+          currentLineup[roleId] = null;
+          generateDayLineups(roleIndex + 1, currentLineup, usedMembers, results);
+        } else {
+          candidates.forEach(cand => {
+            if (!usedMembers.has(cand.id)) {
+              usedMembers.add(cand.id);
+              currentLineup[roleId] = cand;
+              generateDayLineups(roleIndex + 1, currentLineup, usedMembers, results);
+              usedMembers.delete(cand.id);
+            }
+          });
+          currentLineup[roleId] = null;
+          generateDayLineups(roleIndex + 1, currentLineup, usedMembers, results);
+        }
+      };
+
+      const dayLineups = [];
+      generateDayLineups(0, {}, new Set(), dayLineups);
+
+      if (dayLineups.length === 0) {
+        dayLineups.push({});
+      }
+
+      // 3. 組合進總更表選項中（最多保留 12 種組合避免過多）
+      const nextScheduleOptions = [];
+      scheduleOptions.forEach(opt => {
+        dayLineups.slice(0, 4).forEach(lineup => {
+          nextScheduleOptions.push({
+            ...opt,
+            [date]: lineup
+          });
+        });
+      });
+      scheduleOptions = nextScheduleOptions.slice(0, 12);
     });
 
-    return combinations;
+    return scheduleOptions;
   };
 
-  // 9. 渲染總更表（含組合切換按鈕）
+  // 9. 渲染總更表（動態顯示所有可能的組合方案）
   const renderTeamCombinations = () => {
     const dates = Object.keys(availability);
     const allOptions = calculateAllCombinations();
-    const currentSchedule = allOptions[selectedOptionIndex] || allOptions[0];
+    
+    // 確保當前選取的索引不超出範圍
+    const validIndex = selectedOptionIndex >= allOptions.length ? 0 : selectedOptionIndex;
+    const currentSchedule = allOptions[validIndex] || allOptions[0];
     
     return (
       <div className="space-y-4 text-left mt-4 tracking-normal">
         
-        {/* 🌟 頂部組合選擇切換標籤 🌟 */}
-        <div className="bg-slate-100 p-2 rounded-2xl border border-slate-200">
+        {/* 🌟 動態組合選擇切換標籤 🌟 */}
+        <div className="bg-slate-100 p-2.5 rounded-2xl border border-slate-200">
           <div className="text-xs font-bold text-slate-500 mb-2 flex items-center justify-between px-1">
             <span>🔀 選擇服侍組合方案：</span>
             <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-extrabold">
               共 {allOptions.length} 種可能組合
             </span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 overflow-x-auto pb-1">
             {allOptions.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setSelectedOptionIndex(idx)}
-                className={`flex-1 py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 ${
-                  selectedOptionIndex === idx
+                className={`py-2 px-3 rounded-xl text-xs font-black transition shrink-0 flex items-center gap-1.5 ${
+                  validIndex === idx
                     ? 'bg-blue-600 text-white shadow-md'
                     : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
                 }`}
               >
                 <span>✨ 組合 {idx + 1}</span>
-                {selectedOptionIndex === idx && <span className="text-[10px]">✓</span>}
+                {validIndex === idx && <span className="text-[10px]">✓</span>}
               </button>
             ))}
           </div>
@@ -277,11 +288,11 @@ export default function App() {
 
         {/* 顯示目前組合的各場次名單 */}
         {dates.map(date => {
-          const dateRoles = currentSchedule[date];
+          const dateRoles = currentSchedule[date] || {};
           return (
             <div key={date} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-2xs">
               <div className="font-black text-blue-700 text-base mb-3 border-b pb-2 flex items-center justify-between">
-                <span>📅 {date} 陣容（組合 {selectedOptionIndex + 1}）</span>
+                <span>📅 {date} 陣容（組合 {validIndex + 1}）</span>
                 <span className="text-xs font-normal text-slate-500 bg-white px-2 py-0.5 rounded-md border">
                   每崗位限 1 人
                 </span>
@@ -289,31 +300,25 @@ export default function App() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {rolesList.map(r => {
-                  const item = dateRoles[r.id];
-                  const memberAvatarUrl = item && item.assigned ? getAvatarUrl(item.assigned.name) : '';
+                  const assignedMember = dateRoles[r.id];
+                  const memberAvatarUrl = assignedMember ? getAvatarUrl(assignedMember.name) : '';
                   return (
                     <div key={r.id} className="bg-white border border-slate-200 rounded-xl p-2.5 flex items-center justify-between shadow-2xs">
                       <div className="flex items-center space-x-2">
                         <span className="text-xs font-bold text-slate-500 min-w-[70px]">{r.label}:</span>
-                        {item && item.assigned ? (
+                        {assignedMember ? (
                           <div className="flex items-center space-x-1.5 bg-blue-50 border border-blue-200 rounded-full pl-1.5 pr-2 py-0.5">
                             <img 
                               src={memberAvatarUrl} 
                               alt="avatar" 
                               className="w-4 h-4 rounded-full shrink-0 bg-white"
                             />
-                            <span className="text-xs font-black text-blue-900">{item.assigned.name}</span>
+                            <span className="text-xs font-black text-blue-900">{assignedMember.name}</span>
                           </div>
                         ) : (
                           <span className="text-xs text-rose-400 font-semibold italic">尚空缺</span>
                         )}
                       </div>
-
-                      {item && item.backups.length > 0 && (
-                        <div className="text-[10px] text-slate-400" title={`輪休中: ${item.backups.map(b => b.name).join(', ')}`}>
-                          (輪休: {item.backups.length}人)
-                        </div>
-                      )}
                     </div>
                   );
                 })}
@@ -692,9 +697,9 @@ export default function App() {
             <div className="flex items-center justify-between border-b pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-                  <span>🤝</span> 服侍輪替更表
+                  <span>🤝</span> 智慧服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">點擊下方「組合 1 / 組合 2」可預覽不同備選方案</p>
+                <p className="text-xs text-slate-400 mt-1">根據實際登記資料動態計算所有可能組合，點擊上方按鈕自由切換預覽</p>
               </div>
               <button
                 onClick={fetchSubmissions}
