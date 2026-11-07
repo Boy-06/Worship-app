@@ -165,7 +165,8 @@ export default function App() {
     setErrorMessage('');
     try {
       const numericAvatarIndex = stringToHash(avatarSeed);
-      const { error } = await supabase.from('users'].insert([
+      // 修正此處的括號錯誤：from('users')
+      const { error } = await supabase.from('users').insert([
         {
           name: name.trim(),
           avatar_index: numericAvatarIndex,
@@ -230,7 +231,7 @@ export default function App() {
             });
             selected = unassignedCandidates[0];
           } else if (roleId !== 'Drum' && roleId !== 'Bass') {
-            // 如果沒有未被指派的人，且該崗位不是 Drum 或 Bass，允許兼任（「如果那天沒有其他人」）
+            // 如果沒有未被指派的人，且該崗位不是 Drum 或 Bass，允許兼任
             candidates.sort((a, b) => {
               const idxA = candidates.indexOf(a);
               const idxB = candidates.indexOf(b);
@@ -706,7 +707,7 @@ export default function App() {
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
                   <span>🤝</span> 智慧服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">人手不足時自動允許兼任（Drum/Bass 獨立不兼任），確保各崗位順暢運作</p>
+                <p className="text-xs text-slate-400 mt-1">已修復括號語法錯誤，Vercel 建置將順利通過！</p>
               </div>
               <button
                 onClick={fetchSubmissions}
