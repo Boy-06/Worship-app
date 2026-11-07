@@ -165,7 +165,6 @@ export default function App() {
     setErrorMessage('');
     try {
       const numericAvatarIndex = stringToHash(avatarSeed);
-      // 修正此處的括號錯誤：from('users')
       const { error } = await supabase.from('users').insert([
         {
           name: name.trim(),
@@ -186,7 +185,29 @@ export default function App() {
     }
   };
 
-  // 💡 智慧動態輪替方案（支援：優先不重複分配；若人手不足時，允許非 Drum/Bass 崗位兼任）
+  // 💡 檢查該成員在當天是否與目標崗位有衝突
+  const hasRoleConflict = (memberId, targetRoleId, currentLineup) => {
+    const assignedRoles = Object.entries(currentLineup)
+      .filter(([rId, member]) => member && member.id === memberId)
+      .map(([rId]) => rId);
+
+    if (assignedRoles.length === 0) return false;
+
+    // 規則 1: Drum 或 Bass 不能與任何其他崗位兼任
+    if (targetRoleId === 'Drum' || targetRoleId === 'Bass' || assignedRoles.includes('Drum') || assignedRoles.includes('Bass')) {
+      return true;
+    }
+
+    // 規則 2: Guitarist 和 Keys 不可以同時擔當
+    if ((targetRoleId === 'Guitarist' && assignedRoles.includes('Keys')) ||
+        (targetRoleId === 'Keys' && assignedRoles.includes('Guitarist'))) {
+      return true;
+    }
+
+    return false;
+  };
+
+  // 💡 智慧動態輪替方案（支援：優先不重複；人手不足時允許合理兼任，但嚴格遵守 Drum/Bass 獨立及 Guitarist/Keys 互斥）
   const calculateDayCombinations = (date) => {
     let maxCandidates = 1;
 
@@ -206,7 +227,6 @@ export default function App() {
 
     for (let offset = 0; offset < optionsCount; offset++) {
       const currentLineup = {};
-      const assignedMemberIds = new Set(); // 記錄當天已被指派的成員 ID
 
       rolesList.forEach(r => {
         const roleId = r.id;
@@ -219,8 +239,14 @@ export default function App() {
         });
 
         if (candidates.length > 0) {
-          // 優先挑選「尚未被指派」的人
-          let unassignedCandidates = candidates.filter(sub => !assignedMemberIds.has(sub.id));
+          // 過濾掉與現有分配有衝突（如 Drum/Bass 兼任、Guitarist 與 Keys 同時擔當）的候選人
+          const validCandidates = candidates.filter(sub => !hasRoleConflict(sub.id, roleId, currentLineup));
+
+          // 優先挑選「尚未被指派任何崗位」的人
+          let unassignedCandidates = validCandidates.filter(sub => {
+            return !Object.values(currentLineup).some(m => m && m.id === sub.id);
+          });
+
           let selected = null;
 
           if (unassignedCandidates.length > 0) {
@@ -231,18 +257,17 @@ export default function App() {
             });
             selected = unassignedCandidates[0];
           } else if (roleId !== 'Drum' && roleId !== 'Bass') {
-            // 如果沒有未被指派的人，且該崗位不是 Drum 或 Bass，允許兼任
-            candidates.sort((a, b) => {
+            // 如果沒有未被指派的人，且符合兼任條件（且無互斥衝突）
+            validCandidates.sort((a, b) => {
               const idxA = candidates.indexOf(a);
               const idxB = candidates.indexOf(b);
               return ((idxA + offset) % candidates.length) - ((idxB + offset) % candidates.length);
             });
-            selected = candidates[0];
+            selected = validCandidates[0];
           }
 
           if (selected) {
             currentLineup[roleId] = selected;
-            assignedMemberIds.add(selected.id);
           } else {
             currentLineup[roleId] = null;
           }
@@ -707,7 +732,7 @@ export default function App() {
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
                   <span>🤝</span> 智慧服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">已修復括號語法錯誤，Vercel 建置將順利通過！</p>
+                <p className="text-xs text-slate-400 mt-1">已加入 Guitarist 與 Keys 互斥邏輯，確保同一人不兼任這兩個樂器</p>
               </div>
               <button
                 onClick={fetchSubmissions}
