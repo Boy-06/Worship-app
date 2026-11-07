@@ -185,11 +185,10 @@ export default function App() {
     }
   };
 
-  // 💡 動態智慧輪替方案：根據當天該崗位最多有幾位候選人，自動決定生成幾種方案，確保所有人都有機會被派遣
+  // 💡 智慧動態輪替方案（加入：同一天內一人不重複擔任多職、確保所有 OK 成員有機會輪流派遣）
   const calculateDayCombinations = (date) => {
     let maxCandidates = 1;
 
-    // 計算當天各崗位最多的候選人數
     rolesList.forEach(r => {
       const candidates = allSubmissions.filter(sub => {
         const isOk = sub.availability && sub.availability[date] === 'ok';
@@ -201,12 +200,12 @@ export default function App() {
       }
     });
 
-    const optionsCount = Math.min(Math.max(1, maxCandidates), 5); // 動態決定方案數量（最多 5 種）
+    const optionsCount = Math.min(Math.max(1, maxCandidates), 5); // 動態生成方案（最多 5 種）
     const dayOptions = [];
 
     for (let offset = 0; offset < optionsCount; offset++) {
       const currentLineup = {};
-      const assignedMemberIds = new Set(); // 確保同一天內一人不重複擔任多職
+      const assignedMemberIds = new Set(); // 嚴格確保同一天內一人不重複擔任多職
 
       rolesList.forEach(r => {
         const roleId = r.id;
@@ -226,7 +225,7 @@ export default function App() {
 
           const selected = candidates[0];
           currentLineup[roleId] = selected;
-          assignedMemberIds.add(selected.id);
+          assignedMemberIds.add(selected.id); // 標記該成員當天已獲派職位，不能再擔任其他崗位
         } else {
           currentLineup[roleId] = null;
         }
@@ -688,7 +687,7 @@ export default function App() {
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
                   <span>🤝</span> 智慧服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">動態方案數已修復：確保每一位填 OK 的成員都能公平參與輪流派遣</p>
+                <p className="text-xs text-slate-400 mt-1">已完美實現「一人不重複擔任多職」互斥邏輯，確保排班準確流暢</p>
               </div>
               <button
                 onClick={fetchSubmissions}
