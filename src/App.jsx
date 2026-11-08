@@ -49,7 +49,6 @@ export default function App() {
     return `https://api.dicebear.com/10.x/gaze/svg?backgroundColor=ffffff&bodyColor=${palette}&tags=animation&seed=${numericSeed}`;
   };
 
-  // 💡 已將預設日期修改為 14/11, 21/11, 28/11
   const [availability, setAvailability] = useState({
     '14/11 敬拜': 'ok',
     '21/11 敬拜': 'ok',
@@ -726,9 +725,8 @@ export default function App() {
             <div className="flex items-center justify-between border-b pb-4">
               <div>
                 <h2 className="text-xl sm:text-2xl font-black text-slate-800 flex items-center gap-2">
-                  <span>🤝</span> 服侍更表
+                  <span>🤝</span> 服侍輪替更表
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">日期已更新為 14/11, 21/11, 28/11</p>
               </div>
               <button
                 onClick={fetchSubmissions}
